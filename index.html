@@ -3,173 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>小紅帽雞蛋糕鹽行店</title>
+    <title>小紅帽雞蛋糕</title>
     <style>
         :root { --red: #d32f2f; --yellow: #fbc02d; --bg: #fffde7; }
-        
-        /* 基礎設定 */
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            margin: 0; background: var(--bg); color: #333; 
-            -webkit-tap-highlight-color: transparent; /* 移除手機點擊藍框 */
-        }
-
-        /* 標題列 */
-        .header { 
-            background: var(--red); color: white; text-align: center; 
-            padding: 15px; position: sticky; top: 0; z-index: 100;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-
-        /* 區塊標題 */
-        .section-title { 
-            background: var(--yellow); padding: 10px 20px; 
-            font-weight: bold; margin: 20px 0 10px 0; 
-            border-radius: 0 25px 25px 0; display: inline-block;
-            font-size: 0.95rem; color: #5d4037;
-        }
-
-        /* 菜單卡片 */
-        .container { padding: 0 12px 120px 12px; max-width: 500px; margin: auto; }
-        .item-card { 
-            background: white; border-radius: 16px; padding: 16px; 
-            margin-bottom: 12px; display: flex; justify-content: space-between; 
-            align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-        }
-        .item-info h4 { margin: 0; font-size: 1.1rem; letter-spacing: 0.5px; }
-        .item-info p { margin: 6px 0 0; color: var(--red); font-size: 1.1rem; font-weight: 800; }
-        
-        /* 加號按鈕優化 */
-        .btn-add { 
-            background: var(--red); color: white; border: none; 
-            width: 44px; height: 44px; border-radius: 50%; 
-            font-size: 24px; font-weight: bold; cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 4px 8px rgba(211, 47, 47, 0.3);
-        }
-        .btn-add:active { transform: scale(0.9); background: #b71c1c; }
-
-        /* 底部購物車欄 */
-        .cart-bar { 
-            position: fixed; bottom: 0; width: 100%; max-width: 500px;
-            left: 50%; transform: translateX(-50%);
-            background: white; border-top: 1px solid #eee; 
-            padding: 15px 20px 30px 20px; box-sizing: border-box; 
-            display: flex; justify-content: space-between; align-items: center;
-            border-radius: 20px 20px 0 0; box-shadow: 0 -5px 15px rgba(0,0,0,0.08);
-        }
-        .total-text { font-size: 0.9rem; color: #666; }
-        .total-amount { font-size: 1.4rem; color: var(--red); font-weight: 800; }
-        .btn-submit { 
-            background: #333; color: white; border: none; 
-            padding: 12px 30px; border-radius: 12px; 
-            font-size: 1rem; font-weight: bold;
-        }
-
-        /* 成功彈窗 */
-        #overlay { 
-            display: none; position: fixed; top:0; left:0; width:100%; height:100%; 
-            background:rgba(0,0,0,0.85); z-index:200; align-items: center; justify-content: center;
-        }
-        .ticket { 
-            background: white; color: #333; width: 85%; 
-            padding: 30px 20px; border-radius: 25px; text-align: center;
-        }
-        .num { 
-            font-size: 4.5rem; color: var(--red); font-weight: 900; 
-            margin: 20px 0; border: 3px dashed var(--yellow); padding: 10px;
-            border-radius: 15px;
-        }
+        body { font-family: sans-serif; margin: 0; background: var(--bg); padding-bottom: 140px; -webkit-user-select: none; }
+        .header { background: var(--red); color: white; text-align: center; padding: 15px; position: sticky; top: 0; z-index: 100; }
+        .container { padding: 12px; max-width: 500px; margin: auto; }
+        .section-title { background: var(--yellow); padding: 8px 15px; font-weight: bold; margin: 15px 0; border-radius: 0 20px 20px 0; display: inline-block; font-size: 0.9rem; }
+        .item-card { background: white; border-radius: 15px; padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .item-info h4 { margin: 0; font-size: 1.05rem; }
+        .item-info p { margin: 4px 0 0; color: var(--red); font-weight: bold; }
+        .controls { display: flex; align-items: center; gap: 15px; }
+        .btn-circle { width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--red); background: white; color: var(--red); font-size: 24px; font-weight: bold; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .btn-circle.active { background: var(--red); color: white; }
+        .qty { font-weight: bold; min-width: 25px; text-align: center; font-size: 1.2rem; }
+        .cart-bar { position: fixed; bottom: 0; width: 100%; max-width: 500px; left: 50%; transform: translateX(-50%); background: white; padding: 15px 20px 30px; box-sizing: border-box; box-shadow: 0 -5px 15px rgba(0,0,0,0.1); border-radius: 20px 20px 0 0; }
+        .cart-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .total-price { color: var(--red); font-size: 1.5rem; font-weight: bold; }
+        .btn-submit { width: 100%; background: #333; color: white; border: none; padding: 15px; border-radius: 12px; font-size: 1.1rem; font-weight: bold; }
+        #overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:200; align-items: center; justify-content: center; }
+        .ticket { background: white; width: 80%; padding: 30px; border-radius: 25px; text-align: center; }
+        .order-num { font-size: 4rem; color: var(--red); font-weight: 900; margin: 15px 0; border: 2px dashed var(--yellow); border-radius: 10px; }
     </style>
 </head>
 <body>
-
-<div class="header">
-    <h2 style="margin:0;">小紅帽雞蛋糕</h2>
-    <div style="font-size: 0.8rem; opacity: 0.9; margin-top: 5px;">鹽行店 • 現點現烤最美味</div>
-</div>
-
+<div class="header"><h2>小紅帽雞蛋糕</h2><p>鹽行店</p></div>
 <div class="container">
-    <div class="section-title">經典單一口味</div>
-    <div id="single-menu"></div>
-
-    <div class="section-title">超值混搭 (3+2 顆)</div>
-    <div id="mix-menu"></div>
+    <div class="section-title">經典口味</div><div id="single-menu"></div>
+    <div class="section-title">混搭口味</div><div id="mix-menu"></div>
 </div>
-
 <div class="cart-bar">
-    <div>
-        <div class="total-text">應付總額</div>
-        <div class="total-amount">$<span id="total-price">0</span></div>
-    </div>
-    <button class="btn-submit" onclick="submitOrder()">送出訂單</button>
+    <div class="cart-info"><span>份數: <strong id="total-qty">0</strong></span><span class="total-price">$<span id="total-amount">0</span></span></div>
+    <button class="btn-submit" onclick="submitOrder()">確認送出</button>
 </div>
-
-<div id="overlay">
-    <div class="ticket">
-        <h3 style="margin:0; color:#2ecc71;">✓ 訂單已發送</h3>
-        <p style="color:#666;">您的取餐編號</p>
-        <div class="num" id="order-no">#000</div>
-        <p style="font-weight:bold;">請截圖此畫面並向櫃檯付款</p>
-        <button onclick="location.reload()" style="background:#eee; border:none; padding:12px 30px; border-radius:10px; margin-top:15px; width:100%;">返回菜單</button>
-    </div>
-</div>
-
+<div id="overlay"><div class="ticket"><h3>✓ 訂單已發送</h3><div class="order-num" id="order-no">#000</div><button onclick="location.reload()">返回</button></div></div>
 <script>
-    const singleItems = [
-        { name: "古早原味", price: 40 }, { name: "爆漿奶油", price: 45 },
-        { name: "熔岩巧克力", price: 45 }, { name: "肉鬆沙拉", price: 45 },
-        { name: "黃金起司", price: 50 }, { name: "玉米起司", price: 50 },
-        { name: "鮪魚起司", price: 50 }, { name: "半月OREO", price: 55 },
-        { name: "蛋黃奶酥", price: 55 }
-    ];
-
-    const mixItems = [
-        { name: "奶油 + 巧克力", price: 45 }, { name: "奶油 + 肉鬆", price: 45 },
-        { name: "肉鬆 + 巧克力", price: 45 }, { name: "起司 + 玉米", price: 50 },
-        { name: "起司 + 鮪魚", price: 50 }, { name: "玉米 + 鮪魚", price: 50 },
-        { name: "OREO + 奶酥", price: 55 }
-    ];
-
-    let total = 0;
-    let cart = [];
-
-    function renderMenu() {
-        const sDiv = document.getElementById('single-menu');
-        const mDiv = document.getElementById('mix-menu');
-        singleItems.forEach(i => sDiv.innerHTML += createCard(i));
-        mixItems.forEach(i => mDiv.innerHTML += createCard(i));
+    const menu = {
+        single: [{id:'s1', name:"原味", price:40}, {id:'s2', name:"奶油", price:45}, {id:'s3', name:"巧克力", price:45}],
+        mix: [{id:'m1', name:"奶油+巧克力", price:45}, {id:'m2', name:"起司+玉米", price:50}]
+    };
+    let cart = {};
+    function render() {
+        document.getElementById('single-menu').innerHTML = menu.single.map(i => createHtml(i)).join('');
+        document.getElementById('mix-menu').innerHTML = menu.mix.map(i => createHtml(i)).join('');
     }
-
-    function createCard(item) {
-        return `
-            <div class="item-card">
-                <div class="item-info">
-                    <h4>${item.name}</h4>
-                    <p>$${item.price}</p>
-                </div>
-                <button class="btn-add" onclick="add('${item.name}', ${item.price})">+</button>
-            </div>
-        `;
+    function createHtml(i) {
+        const n = cart[i.id] || 0;
+        return `<div class="item-card"><div><h4>${i.name}</h4><p>$${i.price}</p></div>
+        <div class="controls">${n>0?`<button class="btn-circle" onclick="add('${i.id}',-1)">-</button><span class="qty">${n}</span>`:''}<button class="btn-circle active" onclick="add('${i.id}',1)">+</button></div></div>`;
     }
-
-    function add(name, price) {
-        cart.push(name);
-        total += price;
-        document.getElementById('total-price').innerText = total;
-        // 簡單的手機震動回饋 (如果手機支援)
-        if(navigator.vibrate) navigator.vibrate(50);
+    function add(id, d) {
+        cart[id] = (cart[id] || 0) + d;
+        if(cart[id]<=0) delete cart[id];
+        let q=0, a=0;
+        [...menu.single, ...menu.mix].forEach(i => { if(cart[i.id]){ q+=cart[i.id]; a+=cart[i.id]*i.price; } });
+        document.getElementById('total-qty').innerText = q;
+        document.getElementById('total-amount').innerText = a;
+        render();
     }
-
     function submitOrder() {
-        if (cart.length === 0) return alert("請先選購美味的雞蛋糕！");
-        const orderNo = Math.floor(Math.random() * 900) + 100;
-        document.getElementById('order-no').innerText = `#${orderNo}`;
+        if(document.getElementById('total-qty').innerText === "0") return;
+        document.getElementById('order-no').innerText = '#' + (Math.floor(Math.random()*900)+100);
         document.getElementById('overlay').style.display = 'flex';
     }
-
-    renderMenu();
+    render();
 </script>
-
 </body>
 </html>

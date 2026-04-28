@@ -58,7 +58,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, getDocs, query, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyAbG0YttR57SQ5Xr_xPTKY1DoVgPtcnJzc",
@@ -135,9 +135,14 @@
         document.getElementById('total-amount').innerText = a;
     }
 
-    window.showReview = () => {
+    window.showReview = async () => {
         const totalQty = document.getElementById('total-qty').innerText;
         if (totalQty === "0") return alert("請先選購餐點喔！");
+        
+        // 獲取當前序號（根據現有訂單數量 + 1）
+        const qSnap = await getDocs(collection(db, "orders"));
+        const nextNo = qSnap.size + 1;
+        
         const all = [...menuData.single, ...menuData.mix];
         let listHtml = '';
         let total = 0;
@@ -147,19 +152,20 @@
             total += subtotal;
             listHtml += `<div class="confirm-item"><span>${item.name} x ${window.cart[id]}</span><span>$${subtotal}</span></div>`;
         });
+        
         document.getElementById('ticket-content').innerHTML = `
             <h3 style="margin-top:0;">核對訂單明細</h3>
             <div class="confirm-list">${listHtml}</div>
             <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:1.2rem; color:var(--red);">
                 <span>總計金額</span><span>$${total}</span>
             </div>
-            <button class="btn-final" id="confirm-btn" onclick="finalSubmit(${total})">確認無誤，送出訂單</button>
+            <button class="btn-final" id="confirm-btn" onclick="finalSubmit(${total}, ${nextNo})">確認無誤，送出訂單</button>
             <button class="btn-cancel" onclick="closeOverlay()">返回加點</button>
         `;
         document.getElementById('overlay').style.display = 'flex';
     };
 
-    window.finalSubmit = async (finalTotal) => {
+    window.finalSubmit = async (finalTotal, orderNo) => {
         const btn = document.getElementById('confirm-btn');
         btn.disabled = true;
         btn.innerText = "傳送中...";
@@ -172,6 +178,7 @@
             });
 
             await addDoc(collection(db, "orders"), {
+                orderNo: orderNo, // 存入序號
                 items: itemsString,
                 status: "準備中",
                 total: finalTotal,
@@ -179,7 +186,6 @@
                 timestamp: serverTimestamp()
             });
 
-            const orderNo = Math.floor(Math.random() * 900) + 100;
             document.getElementById('ticket-content').innerHTML = `
                 <h3 style="color:#2ecc71; margin-top:0;">✓ 訂單已發送</h3>
                 <p style="color:#666;">您的取餐編號</p>

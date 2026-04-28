@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>商家訂單管理後台</title>
+    <style>
+        :root { --primary: #ff5722; --success: #4caf50; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f0f2f5; margin: 0; padding: 20px; }
+        h1 { color: #333; text-align: center; font-size: 24px; }
+        #order-list { margin-top: 20px; }
+        .order-card { 
+            background: white; border-radius: 12px; padding: 15px; margin-bottom: 15px; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-left: 6px solid var(--primary);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .order-info { flex: 1; }
+        .order-items { font-size: 18px; font-weight: bold; color: #1a1a1a; margin: 5px 0; }
+        .order-time { font-size: 12px; color: #888; }
+        .status-badge { display: inline-block; padding: 4px 8px; border-radius: 4px; background: #fff3e0; color: #ef6c00; font-size: 12px; }
+        .btn-complete { 
+            background: var(--success); color: white; border: none; padding: 12px 18px; 
+            border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s;
+        }
+        .btn-complete:active { opacity: 0.7; transform: scale(0.95); }
+        .empty-msg { text-align: center; color: #999; margin-top: 50px; }
+    </style>
+</head>
+<body>
+
+    <h1>📋 待處理訂單</h1>
+    <div id="order-list">讀取資料中...</div>
+
+    <script type="module">
+        // 引入 Firebase SDK
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, onSnapshot, doc, updateDoc, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // 您提供的 Firebase 配置
+        const firebaseConfig = {
+            apiKey: "AIzaSyAbG0YttR57SQ5Xr_xPTKY1DoVgPtcnJzc",
+            authDomain: "myordersystem-dee08.firebaseapp.com",
+            projectId: "myordersystem-dee08",
+            storageBucket: "myordersystem-dee08.firebasestorage.app",
+            messagingSenderId: "775750661450",
+            appId: "1:775750661450:web:e56f00456f0285c8bebdb3",
+            measurementId: "G-DD5GHKG99Y"
+        };
+
+        // 初始化 Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // 監聽「尚未出餐」的訂單
+        const q = query(collection(db, "orders"), where("status", "!=", "已出餐"));
+
+        onSnapshot(q, (snapshot) => {
+            const listDiv = document.getElementById('order-list');
+            
+            if (snapshot.empty) {
+                listDiv.innerHTML = '<div class="empty-msg">目前沒有待處理的訂單 ☕️</div>';
+                return;
+            }
+
+            listDiv.innerHTML = ""; 
+            snapshot.forEach((orderDoc) => {
+                const data = orderDoc.data();
+                const card = document.createElement('div');
+                card.className = 'order-card';
+                card.innerHTML = `
+                    <div class="order-info">
+                        <div class="status-badge">${data.status || '新訂單'}</div>
+                        <div class="order-items">${data.items || '未命名餐點'}</div>
+                        <div class="order-time">下單時間：${data.time || '剛才'}</div>
+                    </div>
+                    <button class="btn-complete" onclick="finishOrder('${orderDoc.id}')">完成</button>
+                `;
+                listDiv.appendChild(card);
+            });
+        }, (error) => {
+            console.error("讀取失敗:", error);
+            document.getElementById('order-list').innerHTML = "權限不足或資料庫未開啟。請檢查 Firestore Rules。";
+        });
+
+        // 點擊「完成」的動作
+        window.finishOrder = async (id) => {
+            try {
+                const orderRef = doc(db, "orders", id);
+                await updateDoc(orderRef, { status: "已出餐" });
+            } catch (e) {
+                alert("更新失敗：" + e.message);
+            }
+        };
+    </script>
+</body>
+</html>

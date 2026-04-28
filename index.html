@@ -1,9 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>小紅帽雞蛋糕鹽行店</title>
+    <style>
+        :root { --red: #d32f2f; --yellow: #fbc02d; --bg: #fffde7; }
+        body { font-family: sans-serif; margin: 0; background: var(--bg); padding-bottom: 140px; -webkit-user-select: none; }
+        .header { background: var(--red); color: white; text-align: center; padding: 15px; position: sticky; top: 0; z-index: 100; }
+        .container { padding: 12px; max-width: 500px; margin: auto; }
+        .section-title { background: var(--yellow); padding: 8px 15px; font-weight: bold; margin: 15px 0; border-radius: 0 20px 20px 0; display: inline-block; font-size: 0.9rem; box-shadow: 2px 2px 5px rgba(0,0,0,0.1); }
+        .item-card { background: white; border-radius: 15px; padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .item-info h4 { margin: 0; font-size: 1.05rem; color: #444; }
+        .item-info p { margin: 4px 0 0; color: var(--red); font-weight: bold; font-size: 1.1rem; }
+        .controls { display: flex; align-items: center; gap: 15px; }
+        .btn-circle { width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--red); background: white; color: var(--red); font-size: 24px; font-weight: bold; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .btn-circle.active { background: var(--red); color: white; }
+        .qty { font-weight: bold; min-width: 25px; text-align: center; font-size: 1.2rem; }
+        .cart-bar { position: fixed; bottom: 0; width: 100%; max-width: 500px; left: 50%; transform: translateX(-50%); background: white; padding: 15px 20px 30px; box-sizing: border-box; box-shadow: 0 -5px 15px rgba(0,0,0,0.1); border-radius: 20px 20px 0 0; z-index: 100; }
+        .cart-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .total-price { color: var(--red); font-size: 1.6rem; font-weight: 900; }
+        .btn-submit { width: 100%; background: #333; color: white; border: none; padding: 16px; border-radius: 12px; font-size: 1.1rem; font-weight: bold; }
+        #overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:200; align-items: center; justify-content: center; }
+        .ticket { background: white; width: 85%; max-height: 80vh; overflow-y: auto; padding: 25px; border-radius: 25px; text-align: center; box-sizing: border-box; }
+        .confirm-list { text-align: left; margin: 20px 0; border-top: 1px dashed #ccc; border-bottom: 1px dashed #ccc; padding: 15px 0; }
+        .confirm-item { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.95rem; }
+        .order-num { font-size: 4rem; color: var(--red); font-weight: 900; margin: 15px 0; border: 3px dashed var(--yellow); border-radius: 15px; padding: 10px; }
+        .btn-final { background: var(--red); color: white; border: none; padding: 15px; width: 100%; border-radius: 12px; font-size: 1.1rem; font-weight: bold; margin-top: 10px; }
+        .btn-cancel { background: #eee; border: none; padding: 10px; width: 100%; border-radius: 10px; margin-top: 10px; color: #666; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h2 style="margin:0; letter-spacing: 2px;">小紅帽雞蛋糕</h2>
+    <div style="font-size:0.8rem; margin-top:4px; opacity: 0.9;">鹽行店 • 先核對後送出</div>
+</div>
+
+<div class="container">
+    <div class="section-title">經典單一口味 (每份5顆)</div>
+    <div id="single-menu"></div>
+    <div class="section-title">超值混搭 (3+2 顆)</div>
+    <div id="mix-menu"></div>
+</div>
+
+<div class="cart-bar">
+    <div class="cart-info">
+        <span style="color:#666;">已選：<strong id="total-qty" style="color:#333;">0</strong> 份</span>
+        <span class="total-price">$<span id="total-amount">0</span></span>
+    </div>
+    <button class="btn-submit" onclick="showReview()">確認送出訂單</button>
+</div>
+
+<div id="overlay">
+    <div class="ticket" id="ticket-content"></div>
+</div>
+
 <script type="module">
-    // 1. 引入 Firebase SDK
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    // 2. 你的 Firebase 配置
     const firebaseConfig = {
         apiKey: "AIzaSyAbG0YttR57SQ5Xr_xPTKY1DoVgPtcnJzc",
         authDomain: "myordersystem-dee08.firebaseapp.com",
@@ -40,15 +96,15 @@
         ]
     };
 
-    let cart = {};
+    window.cart = {};
 
-    function render() {
+    window.render = () => {
         document.getElementById('single-menu').innerHTML = menuData.single.map(item => createItemHtml(item)).join('');
         document.getElementById('mix-menu').innerHTML = menuData.mix.map(item => createItemHtml(item)).join('');
-    }
+    };
 
     function createItemHtml(item) {
-        const count = cart[item.id] || 0;
+        const count = window.cart[item.id] || 0;
         return `
             <div class="item-card">
                 <div class="item-info"><h4>${item.name}</h4><p>$${item.price}</p></div>
@@ -61,20 +117,19 @@
         `;
     }
 
-    // 將函數綁定到 window 物件，確保按鈕點擊得到
     window.changeQty = (id, delta) => {
-        cart[id] = (cart[id] || 0) + delta;
-        if (cart[id] <= 0) delete cart[id];
+        window.cart[id] = (window.cart[id] || 0) + delta;
+        if (window.cart[id] <= 0) delete window.cart[id];
         updateUI();
     };
 
     function updateUI() {
-        render();
+        window.render();
         let q = 0, a = 0;
         const all = [...menuData.single, ...menuData.mix];
-        Object.keys(cart).forEach(id => {
+        Object.keys(window.cart).forEach(id => {
             const item = all.find(i => i.id === id);
-            if(item) { q += cart[id]; a += item.price * cart[id]; }
+            if(item) { q += window.cart[id]; a += item.price * window.cart[id]; }
         });
         document.getElementById('total-qty').innerText = q;
         document.getElementById('total-amount').innerText = a;
@@ -86,11 +141,11 @@
         const all = [...menuData.single, ...menuData.mix];
         let listHtml = '';
         let total = 0;
-        Object.keys(cart).forEach(id => {
+        Object.keys(window.cart).forEach(id => {
             const item = all.find(i => i.id === id);
-            const subtotal = item.price * cart[id];
+            const subtotal = item.price * window.cart[id];
             total += subtotal;
-            listHtml += `<div class="confirm-item"><span>${item.name} x ${cart[id]}</span><span>$${subtotal}</span></div>`;
+            listHtml += `<div class="confirm-item"><span>${item.name} x ${window.cart[id]}</span><span>$${subtotal}</span></div>`;
         });
         document.getElementById('ticket-content').innerHTML = `
             <h3 style="margin-top:0;">核對訂單明細</h3>
@@ -104,21 +159,18 @@
         document.getElementById('overlay').style.display = 'flex';
     };
 
-    // 3. 送出訂單到 Firebase
     window.finalSubmit = async () => {
         const btn = document.getElementById('confirm-btn');
         btn.disabled = true;
         btn.innerText = "傳送中...";
-
         try {
             const all = [...menuData.single, ...menuData.mix];
             let itemsString = "";
-            Object.keys(cart).forEach(id => {
+            Object.keys(window.cart).forEach(id => {
                 const item = all.find(i => i.id === id);
-                itemsString += `${item.name} x ${cart[id]} `;
+                itemsString += `${item.name} x ${window.cart[id]} `;
             });
 
-            // 寫入 Firebase 的 orders 集合
             await addDoc(collection(db, "orders"), {
                 items: itemsString,
                 status: "準備中",
@@ -131,18 +183,17 @@
                 <h3 style="color:#2ecc71; margin-top:0;">✓ 訂單已發送</h3>
                 <p style="color:#666;">您的取餐編號</p>
                 <div class="order-num">#${orderNo}</div>
-                <p style="font-weight:bold;">請向櫃檯出示此畫面結帳</p>
                 <button class="btn-cancel" onclick="location.reload()">完成點餐</button>
             `;
         } catch (e) {
-            alert("送出失敗，請檢查網路：" + e.message);
+            alert("錯誤：" + e.message);
             btn.disabled = false;
             btn.innerText = "重新送出";
         }
     };
 
     window.closeOverlay = () => { document.getElementById('overlay').style.display = 'none'; };
-    render();
+    window.render();
 </script>
 </body>
 </html>

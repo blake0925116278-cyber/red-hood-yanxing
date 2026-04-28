@@ -1,96 +1,146 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-    <meta charset="utf-8">
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>商家訂單管理後台</title>
+    <title>小紅帽後台管理 - 營業統計版</title>
     <style>
-        :root { --primary: #ff5722; --success: #4caf50; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f0f2f5; margin: 0; padding: 20px; }
-        h1 { color: #333; text-align: center; font-size: 24px; }
-        #order-list { margin-top: 20px; }
-        .order-card { 
-            background: white; border-radius: 12px; padding: 15px; margin-bottom: 15px; 
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-left: 6px solid var(--primary);
-            display: flex; justify-content: space-between; align-items: center;
+        body { font-family: sans-serif; background: #f4f4f4; margin: 0; padding: 20px; padding-bottom: 140px; }
+        .header { background: #d32f2f; color: white; padding: 15px; text-align: center; border-radius: 10px; margin-bottom: 20px; }
+        
+        /* 訂單卡片樣式 */
+        .order-card { background: white; border-radius: 10px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border-left: 8px solid #fbc02d; transition: 0.3s; }
+        .order-card.completed { border-left-color: #bdc3c7; opacity: 0.6; background: #f9f9f9; }
+        
+        .order-header { display: flex; justify-content: space-between; border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 10px; }
+        .order-time { color: #666; font-size: 0.85rem; }
+        .order-items { font-size: 1.1rem; font-weight: bold; color: #333; margin-bottom: 10px; line-height: 1.4; }
+        
+        .order-footer { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+        .order-total { color: #d32f2f; font-size: 1.2rem; font-weight: bold; }
+        
+        /* 按鈕樣式 */
+        .btn-group { display: flex; gap: 8px; }
+        .btn { border: none; padding: 8px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.9rem; }
+        .btn-done { background: #2ecc71; color: white; }
+        .btn-cancel { background: #ecf0f1; color: #95a5a6; }
+        .status-text { font-weight: bold; font-size: 0.85rem; }
+
+        /* 底部累計面板 */
+        .footer-summary { 
+            position: fixed; bottom: 0; left: 0; width: 100%; 
+            background: #222; color: white; padding: 15px 25px; 
+            box-sizing: border-box; display: flex; flex-direction: column; 
+            gap: 5px; z-index: 1000; box-shadow: 0 -3px 15px rgba(0,0,0,0.3);
+            border-radius: 15px 15px 0 0;
         }
-        .order-info { flex: 1; }
-        .order-items { font-size: 18px; font-weight: bold; color: #1a1a1a; margin: 5px 0; }
-        .order-time { font-size: 12px; color: #888; }
-        .status-badge { display: inline-block; padding: 4px 8px; border-radius: 4px; background: #fff3e0; color: #ef6c00; font-size: 12px; }
-        .btn-complete { 
-            background: var(--success); color: white; border: none; padding: 12px 18px; 
-            border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s;
-        }
-        .btn-complete:active { opacity: 0.7; transform: scale(0.95); }
-        .empty-msg { text-align: center; color: #999; margin-top: 50px; }
+        .summary-row { display: flex; justify-content: space-between; align-items: center; }
+        .summary-label { font-size: 0.9rem; color: #bbb; }
+        .summary-value { font-weight: 900; }
+        .val-qty { color: #5dade2; font-size: 1.4rem; }
+        .val-amount { color: #fbc02d; font-size: 1.8rem; }
     </style>
 </head>
 <body>
 
-    <h1>📋 待處理訂單</h1>
-    <div id="order-list">讀取資料中...</div>
+<div class="header">
+    <h1 style="margin:0; font-size: 1.4rem;">今日訂單看板</h1>
+</div>
 
-    <script type="module">
-        // 引入 Firebase SDK
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, onSnapshot, doc, updateDoc, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+<div id="order-list">讀取中...</div>
 
-        // 您提供的 Firebase 配置
-        const firebaseConfig = {
-            apiKey: "AIzaSyAbG0YttR57SQ5Xr_xPTKY1DoVgPtcnJzc",
-            authDomain: "myordersystem-dee08.firebaseapp.com",
-            projectId: "myordersystem-dee08",
-            storageBucket: "myordersystem-dee08.firebasestorage.app",
-            messagingSenderId: "775750661450",
-            appId: "1:775750661450:web:e56f00456f0285c8bebdb3",
-            measurementId: "G-DD5GHKG99Y"
-        };
+<div class="footer-summary">
+    <div class="summary-row">
+        <span class="summary-label">今日總份數</span>
+        <span class="summary-value val-qty"><span id="daily-qty">0</span> 份</span>
+    </div>
+    <div class="summary-row">
+        <span class="summary-label">今日總營收</span>
+        <span class="summary-value val-amount">$<span id="daily-total">0</span></span>
+    </div>
+</div>
 
-        // 初始化 Firebase
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, collection, query, orderBy, onSnapshot, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // 監聽「尚未出餐」的訂單
-        const q = query(collection(db, "orders"), where("status", "!=", "已出餐"));
+    const firebaseConfig = {
+        apiKey: "AIzaSyAbG0YttR57SQ5Xr_xPTKY1DoVgPtcnJzc",
+        authDomain: "myordersystem-dee08.firebaseapp.com",
+        projectId: "myordersystem-dee08",
+        storageBucket: "myordersystem-dee08.firebasestorage.app",
+        messagingSenderId: "775750661450",
+        appId: "1:775750661450:web:e56f00456f0285c8bebdb3"
+    };
 
-        onSnapshot(q, (snapshot) => {
-            const listDiv = document.getElementById('order-list');
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const q = query(collection(db, "orders"), orderBy("timestamp", "desc"));
+    
+    onSnapshot(q, (snapshot) => {
+        const orderList = document.getElementById('order-list');
+        const dailyTotalDisplay = document.getElementById('daily-total');
+        const dailyQtyDisplay = document.getElementById('daily-qty');
+        
+        let totalAmount = 0;
+        let totalQty = 0;
+
+        orderList.innerHTML = "";
+        snapshot.forEach((orderDoc) => {
+            const data = orderDoc.data();
+            const isDone = data.status === "已完成";
             
-            if (snapshot.empty) {
-                listDiv.innerHTML = '<div class="empty-msg">目前沒有待處理的訂單 ☕️</div>';
-                return;
+            // 解析份數：從字串中找出所有 "x 數字" 並加總
+            let orderQty = 0;
+            if (data.items) {
+                const matches = data.items.match(/x\s*(\d+)/g);
+                if (matches) {
+                    matches.forEach(m => {
+                        const num = parseInt(m.replace('x', '').trim());
+                        orderQty += num;
+                    });
+                }
             }
 
-            listDiv.innerHTML = ""; 
-            snapshot.forEach((orderDoc) => {
-                const data = orderDoc.data();
-                const card = document.createElement('div');
-                card.className = 'order-card';
-                card.innerHTML = `
-                    <div class="order-info">
-                        <div class="status-badge">${data.status || '新訂單'}</div>
-                        <div class="order-items">${data.items || '未命名餐點'}</div>
-                        <div class="order-time">下單時間：${data.time || '剛才'}</div>
+            const orderAmount = Number(data.total) || 0;
+            
+            // 只要沒被「取消/刪除」，就全部累計
+            totalAmount += orderAmount;
+            totalQty += orderQty;
+
+            const div = document.createElement('div');
+            div.className = `order-card ${isDone ? 'completed' : ''}`;
+            div.innerHTML = `
+                <div class="order-header">
+                    <span class="order-time">${data.time || '--'}</span>
+                    <span class="status-text" style="color: ${isDone ? '#7f8c8d' : '#e67e22'}">${data.status}</span>
+                </div>
+                <div class="order-items">${data.items}</div>
+                <div class="order-footer">
+                    <div class="order-total">$${orderAmount} <small style="font-weight:normal; color:#888;">(${orderQty}份)</small></div>
+                    <div class="btn-group">
+                        ${!isDone ? `<button class="btn btn-done" onclick="updateStatus('${orderDoc.id}', '已完成')">完成</button>` : ''}
+                        <button class="btn btn-cancel" onclick="cancelOrder('${orderDoc.id}')">取消/刪除</button>
                     </div>
-                    <button class="btn-complete" onclick="finishOrder('${orderDoc.id}')">完成</button>
-                `;
-                listDiv.appendChild(card);
-            });
-        }, (error) => {
-            console.error("讀取失敗:", error);
-            document.getElementById('order-list').innerHTML = "權限不足或資料庫未開啟。請檢查 Firestore Rules。";
+                </div>
+            `;
+            orderList.appendChild(div);
         });
 
-        // 點擊「完成」的動作
-        window.finishOrder = async (id) => {
-            try {
-                const orderRef = doc(db, "orders", id);
-                await updateDoc(orderRef, { status: "已出餐" });
-            } catch (e) {
-                alert("更新失敗：" + e.message);
-            }
-        };
-    </script>
+        dailyTotalDisplay.innerText = totalAmount;
+        dailyQtyDisplay.innerText = totalQty;
+    });
+
+    window.updateStatus = async (id, newStatus) => {
+        await updateDoc(doc(db, "orders", id), { status: newStatus });
+    };
+
+    window.cancelOrder = async (id) => {
+        if(confirm("確定要取消這筆訂單嗎？（金額與份數將不再累計）")) {
+            await deleteDoc(doc(db, "orders", id));
+        }
+    };
+</script>
 </body>
 </html>

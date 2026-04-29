@@ -6,21 +6,26 @@
     <title>小紅帽雞蛋糕點餐</title>
     <style>
         body { font-family: -apple-system, sans-serif; background: #FFF9E1; margin: 0; padding-bottom: 100px; }
-        /* 縮小標頭空間 */
-        .header { background: #d32f2f; color: white; padding: 10px 0; text-align: center; }
-        .header h1 { margin: 5px 0; font-size: 1.5rem; }
         
-        .category-title { background: #FBC02D; display: inline-block; padding: 5px 15px; border-radius: 20px; font-weight: bold; margin: 12px 15px 8px; font-size: 0.9rem; }
-        .menu-item { background: white; margin: 5px 15px; padding: 10px 12px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .item-info b { font-size: 1.1rem; }
-        .item-info span { color: #d32f2f; font-weight: bold; margin-left: 8px; }
+        /* 極簡化標頭 */
+        .header { background: #d32f2f; color: white; padding: 6px 0; text-align: center; }
+        .header h1 { margin: 0; font-size: 1.2rem; letter-spacing: 1px; }
+        
+        .category-title { background: #FBC02D; display: inline-block; padding: 4px 12px; border-radius: 20px; font-weight: bold; margin: 10px 15px 5px; font-size: 0.85rem; }
+        .menu-item { background: white; margin: 4px 15px; padding: 10px 12px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .item-info b { font-size: 1.05rem; }
+        .item-info span { color: #d32f2f; font-weight: bold; margin-left: 6px; }
         .qty-controls { display: flex; align-items: center; gap: 10px; }
-        .btn-qty { width: 30px; height: 30px; border-radius: 50%; border: 1px solid #ccc; background: #fff; font-size: 1.2rem; }
-        .mix-box { background: #fff; margin: 5px 15px; padding: 12px; border-radius: 12px; border: 2px solid #FBC02D; }
-        select { width: 100%; padding: 10px; border-radius: 8px; margin: 5px 0 8px; background: #fff; border: 1px solid #ddd; font-size: 1rem; }
-        #mix-preview-text, #free-mix-preview { margin: 5px 0 10px; padding: 8px; background: #fff9e1; border: 1px dashed #FBC02D; border-radius: 8px; font-size: 0.9rem; color: #444; text-align: center; }
-        .cart-bar { position: fixed; bottom: 0; width: 100%; background: white; padding: 12px 15px; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; z-index: 99; }
-        .btn-submit { background: #d32f2f; color: white; padding: 10px 20px; border-radius: 20px; border: none; font-weight: bold; font-size: 1rem; cursor: pointer; }
+        .btn-qty { width: 28px; height: 28px; border-radius: 50%; border: 1px solid #ccc; background: #fff; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; }
+        
+        .mix-box { background: #fff; margin: 5px 15px; padding: 10px 12px; border-radius: 12px; border: 2px solid #FBC02D; }
+        select { width: 100%; padding: 8px; border-radius: 8px; margin: 4px 0 6px; background: #fff; border: 1px solid #ddd; font-size: 0.95rem; -webkit-appearance: none; }
+        #mix-preview-text, #free-mix-preview { margin: 5px 0 8px; padding: 8px; background: #fff9e1; border: 1px dashed #FBC02D; border-radius: 8px; font-size: 0.85rem; color: #444; text-align: center; }
+        
+        .cart-bar { position: fixed; bottom: 0; width: 100%; background: white; padding: 10px 15px; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; z-index: 99; }
+        .btn-submit { background: #d32f2f; color: white; padding: 8px 18px; border-radius: 20px; border: none; font-weight: bold; font-size: 1rem; cursor: pointer; }
+        
+        /* 彈窗與工單樣式維持不變 */
         .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 100; }
         .ticket { background: white; width: 90%; max-width: 400px; padding: 20px; border-radius: 20px; text-align: center; box-sizing: border-box; max-height: 90vh; overflow-y: auto; }
         .order-num { font-size: 4rem; font-weight: 900; margin: 15px 0; color: #d32f2f; border: 4px solid #d32f2f; display: inline-block; padding: 0 25px; border-radius: 15px; }
@@ -37,8 +42,8 @@
 <body>
 
 <div id="closed-overlay">
-    <h1 style="font-size:4rem; margin:0;">🌙</h1>
-    <h2 style="font-size:2rem; margin:10px 0;">老闆休息囉！</h2>
+    <h1 style="font-size:3rem; margin:0;">🌙</h1>
+    <h2 style="font-size:1.5rem; margin:10px 0;">老闆休息囉！</h2>
     <p>目前非營業時間，暫時無法點餐。</p>
 </div>
 
@@ -49,10 +54,12 @@
 
 <div class="category-title">自由混搭 (3+2顆)</div>
 <div class="mix-box">
-    <label style="font-size:0.85rem; color:#666;">主選 3 顆：</label><select id="free-3btn" onchange="updateFreeMixPreview()"></select>
-    <label style="font-size:0.85rem; color:#666;">副選 2 顆：</label><select id="free-2btn" onchange="updateFreeMixPreview()"></select>
+    <label style="font-size:0.8rem; color:#666;">主口味 (3顆)：</label>
+    <select id="free-3btn" onchange="updateFreeMixPreview()"></select>
+    <label style="font-size:0.8rem; color:#666;">副口味 (2顆)：</label>
+    <select id="free-2btn" onchange="updateFreeMixPreview()"></select>
     <div id="free-mix-preview" style="display:none;"></div>
-    <button onclick="addFreeMix()" style="width:100%; padding:10px; background:#FBC02D; border:none; border-radius:8px; font-weight:bold;">確認混搭加入購物車</button>
+    <button onclick="addFreeMix()" style="width:100%; padding:10px; background:#FBC02D; border:none; border-radius:8px; font-weight:bold; font-size:0.95rem;">確認混搭加入購物車</button>
 </div>
 
 <div class="category-title">超值快選組合 (3+2顆)</div>
@@ -126,7 +133,7 @@
         document.getElementById('free-3btn').innerHTML = optionsHtml;
         document.getElementById('free-2btn').innerHTML = optionsHtml;
 
-        let fixedOpt = '<option value="">-- 超值快選組合 --</option>';
+        let fixedOpt = '<option value="">-- 超值組合 --</option>';
         fixedMixGroup.forEach((g, idx) => {
             const isSold = g.items.some(n => soldOutList.includes(n));
             fixedOpt += `<option value="${idx}" ${isSold?'disabled':''}>${g.items.join('+')} ($${g.price})</option>`;
@@ -205,7 +212,7 @@
         customItems.forEach(m => { detailHtml += `<tr><td>${m.name}</td><td style="text-align:center;">1</td><td>$${m.price}</td></tr>`; });
         detailHtml += `</table></div><input type="text" id="order-note" class="note-input" placeholder="備註...">
             <div style="font-size:1.4rem; font-weight:bold; color:#d32f2f; margin-bottom:15px;">總計金額：${totalStr}</div>
-            <button class="pay-btn" style="background:#d32f2f; color:white;" onclick="submitOrder('${totalStr}')">✅ 確認無誤，送出訂單</button>
+            <button class="pay-btn" style="background:#d32f2f; color:white;" onclick="submitOrder('${totalStr}')">✅ 確認送出</button>
             <button style="background:none; border:none; color:#888; text-decoration:underline;" onclick="document.getElementById('overlay').style.display='none'">返回修改</button>`;
         document.getElementById('ticket-content').innerHTML = detailHtml; document.getElementById('overlay').style.display = 'flex';
     };
@@ -225,10 +232,8 @@
             onSnapshot(doc(db, "orders", docRef.id), (snap) => {
                 if (!snap.exists()) {
                     ticket.innerHTML = `<div class="waiting-box"><h2 style="color:#d32f2f;">❌ 訂單已取消</h2><p>老闆取消了您的訂單。</p><button class="pay-btn" style="background:#d32f2f; color:white;" onclick="location.reload()">重新點餐</button></div>`;
-                    window.speechSynthesis.speak(new SpeechSynthesisUtterance("訂單已被取消"));
                 } else if (snap.data().status === "confirmed") {
-                    ticket.innerHTML = `<div class="waiting-box"><h2 style="color:#2ecc71;">✅ 老闆已接單！</h2><p>您的序號是</p><div class="order-num" style="border-color:#2ecc71; color:#2ecc71;">${no}</div><p>請於現場等候，謝謝！</p><button class="pay-btn" style="background:#2ecc71; color:white;" onclick="location.reload()">好的</button></div>`;
-                    window.speechSynthesis.speak(new SpeechSynthesisUtterance("老闆已接單"));
+                    ticket.innerHTML = `<div class="waiting-box"><h2 style="color:#2ecc71;">✅ 老闆已接單！</h2><p>您的序號是</p><div class="order-num" style="border-color:#2ecc71; color:#2ecc71;">${no}</div><p>請現場等候，謝謝！</p><button class="pay-btn" style="background:#2ecc71; color:white;" onclick="location.reload()">好的</button></div>`;
                 }
             });
         } catch (e) { alert("系統忙碌！"); }

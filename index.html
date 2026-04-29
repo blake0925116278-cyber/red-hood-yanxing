@@ -3,169 +3,175 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>管理後台 - 最新置頂版</title>
+    <title>小紅帽雞蛋糕 - 線上點餐</title>
     <style>
-        body { font-family: -apple-system, sans-serif; background: #f0f0f0; padding: 10px; margin: 0; color: #333; }
-        .header { background: #333; color: #fff; padding: 10px; text-align: center; border-radius: 0 0 15px 15px; }
-        
-        .dashboard { background: #fff; margin: 10px 5px; padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-top: 5px solid #FBC02D; }
-        .stat-row { display: flex; justify-content: space-between; align-items: center; }
-        .stat-card { text-align: left; flex: 1; }
-        .stat-card span { font-size: 0.85rem; color: #666; }
-        .stat-card b { font-size: 1.5rem; color: #d32f2f; display: block; }
-        .btn-clear { background: #d32f2f; color: #fff; border: none; border-radius: 8px; padding: 10px 15px; font-size: 0.9rem; font-weight: bold; cursor: pointer; }
-
-        /* 訂單卡片核心樣式 */
-        .order-card { 
-            background: #d32f2f; 
-            color: #fff;        
-            padding: 12px; 
-            margin-top: 12px; 
-            border-radius: 12px; 
-            position: relative; 
-            box-shadow: 0 4px 10px rgba(211, 47, 47, 0.3);
-            transition: all 0.3s ease;
-        }
-        
-        /* 完成後反白樣式 */
-        .order-card.finished { 
-            background: #ffffff; 
-            color: #888;        
-            box-shadow: none;
-            opacity: 0.6;
-            border: 1px solid #ddd;
-        }
-
-        .order-no-badge { 
-            position: absolute; right: 10px; top: 10px; 
-            background: rgba(255,255,255,0.2); 
-            color: #fff; padding: 4px 12px; border-radius: 8px; font-size: 1.4rem; font-weight: 900; 
-            border: 1px solid #fff;
-        }
-        .finished .order-no-badge { 
-            background: #eee; color: #666; border-color: #ccc; 
-        }
-        
-        .item-row { 
-            display: flex; justify-content: space-between; 
-            padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.2); font-size: 1.15rem; 
-        }
-        .finished .item-row { border-bottom-color: #eee; }
-        
-        .btn-done { 
-            border: none; padding: 10px 20px; border-radius: 8px; 
-            background: #fff; color: #d32f2f; 
-            font-weight: bold; cursor: pointer; font-size: 1.1rem; width: 100%; margin-top: 10px;
-        }
-
-        /* 底部控制區 */
-        .admin-section { background: #fff; padding: 10px; border-radius: 10px; margin: 10px 5px; font-size: 0.85rem; border: 1px solid #ddd; }
-        .stock-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)); gap: 5px; }
-        .s-btn { padding: 8px 2px; font-size: 0.8rem; border: 1px solid #ccc; border-radius: 5px; font-weight: bold; }
-        .s-btn.off { background: #ffebee; color: #d32f2f; }
-        .s-btn.on { background: #e8f5e9; color: #2e7d32; }
+        body { font-family: -apple-system, sans-serif; background: #f8f9fa; padding: 0; margin: 0; color: #333; padding-bottom: 120px; }
+        .header { background: #d32f2f; color: #fff; padding: 15px; text-align: center; border-radius: 0 0 20px 20px; }
+        .container { padding: 15px; }
+        .category-title { font-weight: bold; margin: 20px 0 10px; color: #d32f2f; border-left: 4px solid #d32f2f; padding-left: 8px; }
+        .item-card { background: #fff; display: flex; justify-content: space-between; align-items: center; padding: 12px; margin-bottom: 8px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .item-info b { font-size: 1.05rem; display: block; }
+        .item-info span { color: #d32f2f; font-weight: bold; }
+        .add-btn { background: #d32f2f; color: #fff; border: none; padding: 8px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .add-btn:disabled { background: #ccc; }
+        .mix-box { background: #fff; padding: 15px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 15px; }
+        select { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; background: #fafafa; }
+        #mix-preview-text { margin: 5px 0 12px; padding: 10px; background: #fff9e1; border: 1px dashed #FBC02D; border-radius: 8px; font-size: 0.95rem; color: #444; text-align: center; }
+        .cart-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; padding: 15px; box-shadow: 0 -2px 15px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; z-index: 100; }
+        .btn-send { background: #2e7d32; color: #fff; border: none; padding: 12px 25px; border-radius: 10px; font-size: 1.1rem; font-weight: bold; }
     </style>
 </head>
-<body onclick="initAudio()">
+<body>
 
 <div class="header">
-    <h3 style="margin:0;">小紅帽 訂單看板</h3>
-    <button onclick="initAudio()" id="audio-tip" style="background:#ffeb3b; border:none; padding:4px 10px; border-radius:15px; margin-top:5px; font-size:0.75rem; font-weight:bold;">🔔 語音開啟</button>
+    <h2 style="margin:0;">小紅帽雞蛋糕</h2>
+    <p style="margin:5px 0 0; font-size:0.8rem; opacity:0.9;">每份 5 顆 · 純鮮奶製作</p>
 </div>
 
-<div class="dashboard">
-    <div class="stat-row">
-        <div class="stat-card"><span>今日累計營收</span><b id="total-rev">$0</b></div>
-        <div class="stat-card"><span>總訂單數</span><b id="total-orders">0</b></div>
-        <button class="btn-clear" onclick="clearAllOrders()">🧹 開店歸零</button>
+<div class="container">
+    <div class="category-title">單點口味 (每份5顆)</div>
+    <div id="menu-list"></div>
+
+    <div class="category-title">混搭方式 (3 + 2 顆)</div>
+    <div class="mix-box">
+        <label style="font-size:0.85rem; color:#666;">選擇組合：</label>
+        <select id="fixed-mix-select" onchange="updateFixedMixOptions()"></select>
+        <div id="fixed-mix-config" style="display:none;">
+            <label style="font-size:0.85rem; color:#d32f2f; font-weight:bold;">誰要 3 顆？</label>
+            <select id="fixed-3btn" onchange="showMixPreview()"></select>
+            <div id="mix-preview-text" style="display:none;"></div>
+            <button onclick="addFixedMix()" style="width:100%; padding:12px; background:#d32f2f; color:white; border:none; border-radius:10px; font-weight:bold;">確認加入 $ <span id="fixed-p">0</span></button>
+        </div>
     </div>
+
+    <div class="category-title">購物車</div>
+    <div id="cart-list" style="background:#eee; padding:10px; border-radius:10px; font-size:0.9rem; color:#666;">尚未點餐</div>
 </div>
 
-<div id="list" style="padding:0 5px;"></div>
-
-<div class="admin-section" style="border-color:#d32f2f">
-    <div style="display:flex; align-items:center; gap:5px;">
-        <b>限定口味:</b>
-        <input type="text" id="ltd-n" placeholder="名稱" style="width:80px; padding:6px; border:1px solid #ddd; border-radius:4px;">
-        <input type="number" id="ltd-p" placeholder="價" style="width:45px; padding:6px; border:1px solid #ddd; border-radius:4px;">
-        <button onclick="saveLtd()" style="background:#d32f2f; color:#fff; border:none; padding:6px 12px; border-radius:4px; font-weight:bold;">存</button>
-    </div>
-</div>
-
-<div class="admin-section">
-    <div id="stock-ctrl" class="stock-grid"></div>
+<div class="cart-bar">
+    <div>總計：<b style="font-size:1.5rem; color:#d32f2f;">$<span id="total-price">0</span></b></div>
+    <button class="btn-send" onclick="sendOrder()">確認下單</button>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, collection, query, orderBy, onSnapshot, doc, setDoc, getDoc, getDocs, updateDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = { apiKey: "AIzaSyAbG0YttR57SQ5Xr_xPTKY1DoVgPtcnJzc", authDomain: "myordersystem-dee08.firebaseapp.com", projectId: "myordersystem-dee08", storageBucket: "myordersystem-dee08.firebasestorage.app", messagingSenderId: "775750661450", appId: "1:775750661450:web:e56f00456f0285c8bebdb3" };
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    let audioReady = false; let isFirst = true;
-    window.initAudio = () => { if(!audioReady){ window.speechSynthesis.speak(new SpeechSynthesisUtterance("系統啟動")); audioReady=true; document.getElementById('audio-tip').innerText="✅ 語音已開"; }};
+    // --- 完全對齊照片價格 ---
+    const baseItems = [
+        { n: "古早原味", p: 40 }, 
+        { n: "爆漿奶油", p: 45 }, { n: "熔岩巧克力", p: 45 }, { n: "肉鬆沙拉", p: 45 },
+        { n: "黃金起司", p: 50 }, { n: "玉米起司", p: 50 }, { n: "鮪魚起司", p: 50 },
+        { n: "半月OREO", p: 55 }, { n: "蛋黃奶酥", p: 55 }
+    ];
 
-    // --- 關鍵修改：使用 desc 讓新訂單在上面 ---
-    onSnapshot(query(collection(db, "orders"), orderBy("timestamp", "desc")), (snap) => {
-        if (!isFirst && snap.docChanges().some(c => c.type === "added")) { window.speechSynthesis.speak(new SpeechSynthesisUtterance("新訂單")); }
-        isFirst = false;
-        
-        const list = document.getElementById('list');
-        let rev = 0; let totalCount = 0;
-        list.innerHTML = "";
-        
-        snap.forEach(d => {
-            const o = d.data();
-            rev += parseInt(o.total.replace(/[^0-9]/g, "")) || 0;
-            totalCount++;
+    const fixedMixGroup = [
+        { items: ["爆漿奶油", "熔岩巧克力"], price: 45 },
+        { items: ["爆漿奶油", "肉鬆沙拉"], price: 45 },
+        { items: ["肉鬆沙拉", "熔岩巧克力"], price: 45 },
+        { items: ["黃金起司", "玉米起司"], price: 50 },
+        { items: ["黃金起司", "鮪魚起司"], price: 50 },
+        { items: ["玉米起司", "鮪魚起司"], price: 50 },
+        { items: ["半月OREO", "蛋黃奶酥"], price: 55 }
+    ];
 
-            const isF = o.status === "finished";
-            const itemsHtml = o.items.split(', ').map(str => {
-                const parts = str.split('x');
-                return `<div class="item-row"><span>${parts[0]}</span><b>x${parts[1]||1}</b></div>`;
-            }).join('');
+    let cart = [];
+    let soldOutList = [];
+    let ltdItem = null;
 
-            const div = document.createElement('div');
-            div.className = `order-card ${isF ? 'finished' : ''}`;
-            div.innerHTML = `
-                <div class="order-no-badge">#${o.orderNo}</div>
-                <div style="font-size:0.85rem; opacity:0.8;">${o.time} | ${o.payMethod}</div>
-                <div style="margin:10px 0;">${itemsHtml}</div>
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <b style="font-size:1.4rem;">${o.total}</b>
-                    ${isF ? '<b style="color:#aaa;">✓ 已完成</b>' : `<button class="btn-done" onclick="markDone('${d.id}')">完成出餐</button>`}
-                </div>`;
-            list.appendChild(div);
-        });
+    onSnapshot(doc(db, "settings", "menuStatus"), s => { soldOutList = s.exists() ? s.data().soldOut || [] : []; renderMenu(); });
+    onSnapshot(doc(db, "settings", "limitedEdition"), s => { ltdItem = s.exists() ? s.data() : null; renderMenu(); });
 
-        document.getElementById('total-rev').innerText = `$${rev}`;
-        document.getElementById('total-orders').innerText = totalCount;
-    });
+    function renderMenu() {
+        const list = document.getElementById('menu-list');
+        let items = [...baseItems];
+        if (ltdItem && ltdItem.name) items.push({ n: ltdItem.name, p: ltdItem.price, isLtd: true });
+        list.innerHTML = items.map(i => {
+            const isSold = soldOutList.includes(i.n);
+            return `<div class="item-card"><div class="item-info"><b>${i.isLtd ? '⭐' : ''}${i.n}</b><span>$${i.p}</span></div>
+                    <button class="add-btn" onclick="addToCart('${i.n}', ${i.p})" ${isSold ? 'disabled' : ''}>${isSold ? '完' : '加入'}</button></div>`;
+        }).join('');
+        const ms = document.getElementById('fixed-mix-select');
+        ms.innerHTML = '<option value="">請選擇混搭組合...</option>' + fixedMixGroup.map((g, idx) => `<option value="${idx}">${g.items.join(' + ')} ($${g.price})</option>`).join('');
+    }
 
-    window.markDone = async (id) => { await updateDoc(doc(db, 'orders', id), { status: "finished" }); };
-
-    window.clearAllOrders = async () => {
-        if(confirm("確定要「開店歸零」嗎？\n所有訂單將被清空，下一張單會從 1 號重新開始。")) {
-            const q = await getDocs(collection(db, "orders"));
-            const batch = writeBatch(db);
-            q.forEach(d => batch.delete(d.ref));
-            await batch.commit();
-        }
+    window.updateFixedMixOptions = () => {
+        const idx = document.getElementById('fixed-mix-select').value;
+        const config = document.getElementById('fixed-mix-config');
+        if(!idx) { config.style.display = 'none'; return; }
+        const group = fixedMixGroup[idx];
+        document.getElementById('fixed-p').innerText = group.price;
+        document.getElementById('fixed-3btn').innerHTML = group.items.map(n => `<option value="${n}">${n} (3顆)</option>`).join('');
+        config.style.display = 'block';
+        showMixPreview();
     };
 
-    const baseItems = ["古早原味","爆漿奶油","熔岩巧克力","肉鬆沙拉","黃金起司","玉米起司","鮪魚起司","半月OREO","蛋黃奶酥"];
-    let curLtd = "";
-    function updateStockUI(sList) {
-        let all = [...baseItems]; if(curLtd) all.push(curLtd);
-        document.getElementById('stock-ctrl').innerHTML = all.map(n => `<button class="s-btn ${sList.includes(n)?'off':'on'}" onclick="toggleSold('${n}',${sList.includes(n)})">${n}</button>`).join('');
-        window.curSold = sList;
+    window.showMixPreview = () => {
+        const main = document.getElementById('fixed-3btn').value;
+        const idx = document.getElementById('fixed-mix-select').value;
+        if(!main || !idx) return;
+        const group = fixedMixGroup[idx];
+        const other = group.items.find(i => i !== main);
+        const preview = document.getElementById('mix-preview-text');
+        preview.innerHTML = `🛒 已選：<b>${main} (3顆)</b> + <b>${other} (2顆)</b>`;
+        preview.style.display = 'block';
+    };
+
+    window.addToCart = (n, p) => {
+        const exist = cart.find(i => i.n === n);
+        if (exist) exist.q++; else cart.push({ n, p, q: 1 });
+        refreshCart();
+    };
+
+    window.addFixedMix = () => {
+        const idx = document.getElementById('fixed-mix-select').value;
+        const main = document.getElementById('fixed-3btn').value;
+        const group = fixedMixGroup[idx];
+        const other = group.items.find(i => i !== main);
+        const name = `[混搭]${main}(3)+${other}(2)`;
+        const exist = cart.find(i => i.n === name);
+        if (exist) exist.q++; else cart.push({ n: name, p: group.price, q: 1 });
+        document.getElementById('fixed-mix-select').value = "";
+        document.getElementById('fixed-mix-config').style.display = "none";
+        refreshCart();
+    };
+
+    function refreshCart() {
+        const list = document.getElementById('cart-list');
+        if (cart.length === 0) { list.innerHTML = "尚未點餐"; document.getElementById('total-price').innerText = "0"; return; }
+        let total = 0;
+        list.innerHTML = cart.map((i, idx) => {
+            total += (i.p * i.q);
+            return `<div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span>${i.n} x ${i.q}</span><span onclick="window.removeCart(${idx})" style="color:#d32f2f;">移除</span></div>`;
+        }).join('');
+        document.getElementById('total-price').innerText = total;
     }
-    onSnapshot(doc(db, "settings", "menuStatus"), s => updateStockUI(s.exists() ? s.data().soldOut || [] : []));
-    onSnapshot(doc(db, "settings", "limitedEdition"), s => { if(s.exists()){ curLtd = s.data().name; getDoc(doc(db, "settings", "menuStatus")).then(ss => updateStockUI(ss.exists() ? ss.data().soldOut || [] : [])); }});
-    window.toggleSold = async (n, isS) => { await setDoc(doc(db, "settings", "menuStatus"), { soldOut: isS ? window.curSold.filter(i=>i!==n) : [...window.curSold, n] }); };
-    window.saveLtd = async () => { await setDoc(doc(db, "settings", "limitedEdition"), { name: document.getElementById('ltd-n').value, price: Number(document.getElementById('ltd-p').value) }); alert("OK"); };
+
+    window.removeCart = (idx) => { cart.splice(idx, 1); refreshCart(); };
+
+    window.sendOrder = async () => {
+        if (cart.length === 0) return alert("請先點餐");
+        if (!confirm("確認下單？")) return;
+        const orderNo = Math.floor(Math.random() * 900) + 100;
+        const orderData = {
+            orderNo: orderNo,
+            items: cart.map(i => `${i.n}x${i.q}`).join(', '),
+            total: `NT$${document.getElementById('total-price').innerText}`,
+            time: new Date().toLocaleTimeString('zh-TW', {hour12: false, hour: '2-digit', minute:'2-digit'}),
+            timestamp: Date.now(),
+            payMethod: "現場付款",
+            status: "pending"
+        };
+        try {
+            await addDoc(collection(db, "orders"), orderData);
+            alert(`下單成功！序號：#${orderNo}`);
+            cart = []; refreshCart();
+        } catch (e) { alert("失敗，請重試"); }
+    };
 </script>
 </body>
 </html>

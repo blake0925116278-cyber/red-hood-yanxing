@@ -13,34 +13,26 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
         .order-card.completed { border-left-color: #bdc3c7; opacity: 0.5; }
         .order-badge { position: absolute; right: 12px; top: 12px; background: #333; color: #fff; padding: 4px 10px; border-radius: 15px; font-weight: 900; }
-        .order-items { font-size: 1.15rem; font-weight: bold; margin: 8px 0; color: #222; }
+        .order-items { font-size: 1.15rem; font-weight: bold; margin: 8px 0; color: #222; line-height: 1.4; }
         .summary-section { background: #222; color: white; padding: 20px; border-radius: 15px; margin-top: 30px; }
         .summary-row { display: flex; justify-content: space-between; margin-bottom: 8px; }
         .stock-section { background: white; border-radius: 15px; padding: 15px; margin-top: 15px; border: 1px solid #ddd; margin-bottom: 50px;}
         .stock-btn { padding: 10px; border-radius: 8px; font-size: 0.85rem; cursor: pointer; font-weight: bold; border: 1px solid transparent; }
         .stock-btn.off { background: #ffcdd2; color: #d32f2f; border-color: #d32f2f; }
         .stock-btn.on { background: #c8e6c9; color: #2e7d32; border-color: #2e7d32; }
-        
-        /* 音效提示開關樣式 */
-        .sound-toggle { background: #fff; padding: 5px 10px; border-radius: 20px; border: 2px solid #d32f2f; font-size: 0.8rem; display: flex; align-items: center; gap: 5px; cursor: pointer; }
+        .sound-toggle { background: #fff; padding: 5px 12px; border-radius: 20px; border: 2px solid #d32f2f; font-size: 0.85rem; font-weight: bold; cursor: pointer; color: #d32f2f; }
     </style>
 </head>
-<body onclick="enableAudio()"> <div class="header"><h1>今日訂單看板</h1></div>
+<body onclick="initAudio()"> <div class="header"><h1>今日訂單看板</h1></div>
 
 <div class="admin-tools">
     <div id="audio-status" class="sound-toggle" onclick="toggleSound()">
-        🔊 提示音：已開啟
+        🔊 語音提醒：開啟中
     </div>
     <button class="btn-reset" onclick="resetAllOrders()">🧹 清空數據</button>
 </div>
 
-<audio id="notification-sound" preload="auto">
-    <source src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" type="audio/mpeg">
-</audio>
-
-<div id="order-list">讀取中...</div>
-
-<hr style="border: 0; border-top: 1px solid #ccc; margin: 40px 0 20px;">
+<div id="order-list">連線中...</div>
 
 <div class="summary-section">
     <div class="summary-row"><span>今日總份數</span><span id="daily-qty" style="color:#5dade2; font-weight:900;">0</span></div>
@@ -49,7 +41,7 @@
 
 <div class="stock-section">
     <h4 style="margin-top:0;">🚫 品項供應管理</h4>
-    <div id="stock-manager" style="display:flex; flex-wrap:wrap; gap:8px;">載入中...</div>
+    <div id="stock-manager" style="display:flex; flex-wrap:wrap; gap:8px;"></div>
 </div>
 
 <script type="module">
@@ -70,37 +62,39 @@
     
     let isFirstLoad = true;
     let soundEnabled = true;
-    const audio = document.getElementById('notification-sound');
 
-    // 啟用音效 (解決瀏覽器限制)
-    window.enableAudio = () => {
-        if (soundEnabled) {
-            audio.play().then(() => {
-                audio.pause();
-                audio.currentTime = 0;
-            }).catch(e => console.log("等待手動啟用音效"));
-        }
+    // 播放「您有新的訂單」語音
+    const playOrderVoice = () => {
+        if (!soundEnabled) return;
+        const msg = new SpeechSynthesisUtterance();
+        msg.text = "您有新的訂單哦";
+        msg.lang = 'zh-TW';
+        msg.rate = 1;
+        window.speechSynthesis.speak(msg);
+        if (navigator.vibrate) navigator.vibrate([300, 100, 300]);
+    };
+
+    window.initAudio = () => {
+        // 點擊時測試播放一個極短的語音，解鎖權限
+        const startMsg = new SpeechSynthesisUtterance("");
+        window.speechSynthesis.speak(startMsg);
     };
 
     window.toggleSound = () => {
         soundEnabled = !soundEnabled;
-        document.getElementById('audio-status').innerText = soundEnabled ? "🔊 提示音：已開啟" : "🔇 提示音：已關閉";
+        document.getElementById('audio-status').innerText = soundEnabled ? "🔊 語音提醒：開啟中" : "🔇 語音提醒：已關閉";
     };
 
     onSnapshot(query(collection(db, "orders"), orderBy("timestamp", "desc")), (snapshot) => {
-        const orderList = document.getElementById('order-list');
-        let totalAmount = 0, totalQty = 0;
-        
-        // 判斷是否為新訂單 (非第一次載入，且有新資料增加時)
         if (!isFirstLoad && snapshot.docChanges().some(change => change.type === "added")) {
-            if (soundEnabled) {
-                audio.play().catch(e => console.log("需點擊頁面啟用音效"));
-                if (navigator.vibrate) navigator.vibrate([200, 100, 200]); // 手機震動
-            }
+            playOrderVoice();
         }
         isFirstLoad = false;
 
+        const orderList = document.getElementById('order-list');
+        let totalAmount = 0, totalQty = 0;
         orderList.innerHTML = "";
+
         snapshot.forEach((orderDoc) => {
             const data = orderDoc.data();
             const isDone = data.status === "已完成";
@@ -125,7 +119,7 @@
         document.getElementById('daily-total').innerText = totalAmount;
     });
 
-    // 品項管理與其他邏輯 (保持不變...)
+    // 品項與開關
     const allNames = ["古早原味", "爆漿奶油", "熔岩巧克力", "肉鬆沙拉", "黃金起司", "玉米起司", "鮪魚起司", "半月OREO", "蛋黃奶酥", "奶油 + 巧克力", "奶油 + 肉鬆", "肉鬆 + 巧克力", "起司 + 玉米", "起司 + 鮪魚", "玉米 + 鮪魚", "OREO + 奶酥"];
     onSnapshot(doc(db, "settings", "menuStatus"), (docSnap) => {
         const soldOut = docSnap.exists() ? docSnap.data().soldOut || [] : [];
@@ -134,6 +128,7 @@
             return `<button class="stock-btn ${isOff ? 'off' : 'on'}" onclick="toggleStock('${name}', ${isOff})">${name}</button>`;
         }).join('');
     });
+
     window.toggleStock = async (name, isOff) => {
         const docRef = doc(db, "settings", "menuStatus");
         let current = [];

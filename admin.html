@@ -3,45 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>小紅帽後台管理</title>
+    <title>小紅帽後台管理系統</title>
     <style>
-        body { font-family: sans-serif; background: #f4f4f4; margin: 0; padding: 15px; }
-        .header { background: #d32f2f; color: white; padding: 12px; text-align: center; border-radius: 10px; margin-bottom: 10px; }
-        .admin-tools { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .btn-reset { background: #666; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        .order-card { background: white; border-radius: 12px; padding: 12px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border-left: 8px solid #fbc02d; position: relative; animation: fadeIn 0.5s; }
+        body { font-family: -apple-system, sans-serif; background: #f4f4f4; margin: 0; padding: 15px; padding-bottom: 50px; }
+        .header { background: #d32f2f; color: white; padding: 15px; text-align: center; border-radius: 10px; margin-bottom: 15px; }
+        .admin-tools { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; gap: 10px; }
+        .sound-status { background: #ffeb3b; padding: 10px; border-radius: 20px; font-size: 0.85rem; font-weight: bold; border: 2px solid #fbc02d; cursor: pointer; flex: 1; text-align: center; }
+        .btn-reset { background: #666; color: white; border: none; padding: 10px 15px; border-radius: 10px; cursor: pointer; font-weight: bold; }
+        
+        .order-card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); position: relative; border-left: 8px solid #ddd; animation: fadeIn 0.4s; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-        .order-card.completed { border-left-color: #bdc3c7; opacity: 0.5; }
-        .order-badge { position: absolute; right: 12px; top: 12px; background: #333; color: #fff; padding: 4px 10px; border-radius: 15px; font-weight: 900; }
-        .order-items { font-size: 1.15rem; font-weight: bold; margin: 8px 0; color: #222; }
-        .summary-section { background: #222; color: white; padding: 20px; border-radius: 15px; margin-top: 30px; }
-        .summary-row { display: flex; justify-content: space-between; margin-bottom: 8px; }
-        .sound-status { background: #ffeb3b; padding: 8px 15px; border-radius: 25px; font-size: 0.9rem; font-weight: bold; border: 2px solid #fbc02d; cursor: pointer; text-align: center; width: 60%; }
-        .stock-section { background: white; border-radius: 15px; padding: 15px; margin-top: 15px; border: 1px solid #ddd; margin-bottom: 50px;}
-        .stock-btn { padding: 10px; border-radius: 8px; font-size: 0.85rem; cursor: pointer; font-weight: bold; border: 1px solid transparent; }
+        
+        /* 根據狀態改變邊框顏色 */
+        .order-card.unpaid { border-left-color: #666; } /* 現場付款 */
+        .order-card.linepay { border-left-color: #00B900; } /* Line Pay */
+        .order-card.completed { border-left-color: #bdc3c7; opacity: 0.6; }
+        
+        .order-badge { position: absolute; right: 12px; top: 12px; background: #333; color: #fff; padding: 4px 12px; border-radius: 15px; font-weight: 900; font-size: 1.2rem; }
+        .pay-method-tag { font-size: 0.9rem; font-weight: bold; margin-bottom: 8px; display: block; }
+        .order-items { font-size: 1.25rem; font-weight: bold; margin: 10px 0; color: #222; line-height: 1.4; }
+        
+        .summary-section { background: #222; color: white; padding: 20px; border-radius: 15px; margin-top: 20px; }
+        .summary-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 1.1rem; }
+        
+        .stock-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 8px; margin-top: 15px; }
+        .stock-btn { padding: 10px 5px; border-radius: 8px; font-size: 0.8rem; cursor: pointer; font-weight: bold; border: 1px solid transparent; text-align: center; }
         .stock-btn.off { background: #ffcdd2; color: #d32f2f; border-color: #d32f2f; }
         .stock-btn.on { background: #c8e6c9; color: #2e7d32; border-color: #2e7d32; }
     </style>
 </head>
 <body onclick="unlockAudio()">
 
-<div class="header"><h1>今日訂單看板</h1></div>
+<div class="header"><h1>訂單看板 (管理端)</h1></div>
 
 <div class="admin-tools">
     <div id="sound-info" class="sound-status">📣 點我開啟「有訂單喔」語音</div>
-    <button class="btn-reset" onclick="resetAllOrders()">清空數據</button>
+    <button class="btn-reset" onclick="resetAllOrders()">🧹 清空</button>
 </div>
 
 <div id="order-list">連線中...</div>
 
 <div class="summary-section">
-    <div class="summary-row"><span>今日總份數</span><span id="daily-qty" style="color:#5dade2; font-weight:900;">0</span></div>
-    <div class="summary-row"><span>今日總營收</span><span style="color:#fbc02d; font-size:1.8rem; font-weight:900;">$<span id="daily-total">0</span></span></div>
+    <div class="summary-row"><span>待製作訂單</span><span id="pending-count" style="color:#5dade2; font-weight:bold;">0</span></div>
+    <div class="summary-row"><span>今日總營收</span><span style="color:#fbc02d; font-size:1.5rem; font-weight:bold;">$<span id="daily-total">0</span></span></div>
 </div>
 
-<div class="stock-section">
-    <h4 style="margin-top:0;">🚫 品項供應管理</h4>
-    <div id="stock-manager" style="display:flex; flex-wrap:wrap; gap:8px;"></div>
+<div style="background: white; border-radius: 15px; padding: 15px; margin-top: 20px; border: 1px solid #ddd;">
+    <h4 style="margin:0; color:#d32f2f;">🚫 售完標記 (點擊切換)</h4>
+    <div id="stock-manager" class="stock-grid"></div>
 </div>
 
 <script type="module">
@@ -63,34 +72,25 @@
     let isFirstLoad = true;
     let audioUnlocked = false;
 
-    // 解鎖語音功能
+    // 語音啟動
     window.unlockAudio = () => {
         if (!audioUnlocked) {
-            // 播放一個安靜的測試語音來解鎖系統
-            const utter = new SpeechSynthesisUtterance("語音已就緒");
-            utter.lang = 'zh-TW';
-            utter.volume = 0; // 靜音測試
+            const utter = new SpeechSynthesisUtterance("");
             window.speechSynthesis.speak(utter);
-            
             audioUnlocked = true;
-            const info = document.getElementById('sound-info');
-            info.innerText = "✅ 語音提醒已啟動";
-            info.style.background = "#c8e6c9";
-            info.style.borderColor = "#2e7d32";
+            document.getElementById('sound-info').innerText = "✅ 語音提醒已啟動";
+            document.getElementById('sound-info').style.background = "#c8e6c9";
         }
     };
 
-    // 播放語音函數
     const speakOrder = () => {
         if (!audioUnlocked) return;
         const msg = new SpeechSynthesisUtterance("有訂單喔");
         msg.lang = 'zh-TW';
-        msg.rate = 1.0;
-        msg.pitch = 1.0;
         window.speechSynthesis.speak(msg);
-        if (navigator.vibrate) navigator.vibrate([300, 100, 300]);
     };
 
+    // 訂單即時顯示
     onSnapshot(query(collection(db, "orders"), orderBy("timestamp", "desc")), (snapshot) => {
         if (!isFirstLoad && snapshot.docChanges().some(change => change.type === "added")) {
             speakOrder();
@@ -99,33 +99,47 @@
 
         const orderList = document.getElementById('order-list');
         let totalAmount = 0;
+        let pendingCount = 0;
         orderList.innerHTML = "";
 
         snapshot.forEach((orderDoc) => {
             const data = orderDoc.data();
             const isDone = data.status === "已完成";
             const orderTotal = Number(data.total) || 0;
+            if (!isDone) pendingCount++; 
             totalAmount += orderTotal;
 
+            // 付款方式文字處理
+            const payMethod = data.payMethod || "現場付款";
+            const isLinePay = payMethod === 'Line Pay';
+            const methodClass = isLinePay ? 'linepay' : 'unpaid';
+            const methodLabel = isLinePay ? '📱 LINE Pay 付款' : '💰 現場現金付款';
+            const methodColor = isLinePay ? '#00B900' : '#666';
+
             const div = document.createElement('div');
-            div.className = `order-card ${isDone ? 'completed' : ''}`;
+            div.className = `order-card ${methodClass} ${isDone ? 'completed' : ''}`;
             div.innerHTML = `
                 <div class="order-badge">#${data.orderNo || '?'}</div>
                 <div style="font-size:0.8rem;color:#888;">${data.time}</div>
+                
+                <div class="pay-method-tag" style="color:${methodColor}">${methodLabel}</div>
+                
                 <div class="order-items">${data.items}</div>
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <div style="color:#d32f2f; font-weight:bold;">$${orderTotal}</div>
+                
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
+                    <div style="color:#d32f2f; font-weight:bold; font-size:1.3rem;">$${orderTotal}</div>
                     <div>
-                        ${!isDone ? `<button style="background:#2ecc71; color:white; border:none; padding:8px 12px; border-radius:5px; font-weight:bold;" onclick="updateStatus('${orderDoc.id}', '已完成')">完成</button>` : ''}
-                        <button style="background:#eee; border:none; padding:8px 12px; border-radius:5px; color:#888;" onclick="cancelOrder('${orderDoc.id}')">刪除</button>
+                        ${!isDone ? `<button onclick="updateStatus('${orderDoc.id}', '已完成')" style="background:#2ecc71; color:white; border:none; padding:10px 18px; border-radius:8px; font-weight:bold; font-size:1rem;">完成</button>` : ''}
+                        <button onclick="cancelOrder('${orderDoc.id}')" style="background:#eee; border:none; padding:10px 12px; border-radius:8px; color:#888; margin-left:8px;">刪除</button>
                     </div>
                 </div>`;
             orderList.appendChild(div);
         });
         document.getElementById('daily-total').innerText = totalAmount;
+        document.getElementById('pending-count').innerText = pendingCount;
     });
 
-    // 品項供應管理部分
+    // 售完管理
     const allNames = ["古早原味", "爆漿奶油", "熔岩巧克力", "肉鬆沙拉", "黃金起司", "玉米起司", "鮪魚起司", "半月OREO", "蛋黃奶酥", "奶油 + 巧克力", "奶油 + 肉鬆", "肉鬆 + 巧克力", "起司 + 玉米", "起司 + 鮪魚", "玉米 + 鮪魚", "OREO + 奶酥"];
     onSnapshot(doc(db, "settings", "menuStatus"), (docSnap) => {
         const soldOut = docSnap.exists() ? docSnap.data().soldOut || [] : [];
@@ -134,6 +148,7 @@
             return `<button class="stock-btn ${isOff ? 'off' : 'on'}" onclick="toggleStock('${name}', ${isOff})">${name}</button>`;
         }).join('');
     });
+
     window.toggleStock = async (name, isOff) => {
         const docRef = doc(db, "settings", "menuStatus");
         let current = [];
@@ -141,9 +156,10 @@
         if(!isOff) current.push(name); else current = current.filter(n => n !== name);
         await setDoc(docRef, { soldOut: current });
     };
+
     window.updateStatus = async (id, s) => await updateDoc(doc(db, "orders", id), { status: s });
     window.cancelOrder = async (id) => { if(confirm("確定刪除？")) await deleteDoc(doc(db, "orders", id)); };
-    window.resetAllOrders = async () => { if(confirm("確定清空今天所有數據？")) { const q = await getDocs(collection(db, "orders")); const b = writeBatch(db); q.forEach(d => b.delete(d.ref)); await b.commit(); } };
+    window.resetAllOrders = async () => { if(confirm("確定清空今天所有訂單？營收也會歸零喔！")) { const q = await getDocs(collection(db, "orders")); const b = writeBatch(db); q.forEach(d => b.delete(d.ref)); await b.commit(); } };
 </script>
 </body>
 </html>

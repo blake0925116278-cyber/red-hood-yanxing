@@ -7,21 +7,14 @@
     <style>
         body { font-family: sans-serif; background: #f4f4f4; margin: 0; padding: 15px; }
         .header { background: #d32f2f; color: white; padding: 12px; text-align: center; border-radius: 10px; margin-bottom: 10px; }
-        
         .admin-tools { display: flex; justify-content: flex-end; margin-bottom: 15px; }
         .btn-reset { background: #666; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 0.85rem; }
-        
-        /* 訂單卡片 */
         .order-card { background: white; border-radius: 12px; padding: 12px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border-left: 8px solid #fbc02d; position: relative; }
         .order-card.completed { border-left-color: #bdc3c7; opacity: 0.5; }
         .order-badge { position: absolute; right: 12px; top: 12px; background: #333; color: #fff; padding: 4px 10px; border-radius: 15px; font-weight: 900; }
         .order-items { font-size: 1.15rem; font-weight: bold; margin: 8px 0; padding-right: 45px; line-height: 1.5; color: #222; }
-        
-        /* 統計區塊 (改為不固定在底部，放在列表後) */
-        .summary-section { background: #222; color: white; padding: 20px; border-radius: 15px; margin-top: 30px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        .summary-section { background: #222; color: white; padding: 20px; border-radius: 15px; margin-top: 30px; }
         .summary-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-        
-        /* 供應管理區塊 (放在統計下面) */
         .stock-section { background: white; border-radius: 15px; padding: 15px; margin-top: 15px; margin-bottom: 50px; border: 1px solid #ddd; }
         .stock-btn { padding: 10px; border: none; border-radius: 8px; font-size: 0.85rem; cursor: pointer; font-weight: bold; border: 1px solid transparent; }
         .stock-btn.off { background: #ffcdd2; color: #d32f2f; border-color: #d32f2f; }
@@ -48,7 +41,6 @@
 <div class="stock-section">
     <h4 style="margin:0 0 12px 0; color:#d32f2f;">🚫 品項供應開關</h4>
     <div id="stock-manager" style="display:flex; flex-wrap:wrap; gap:8px;">載入中...</div>
-    <p style="font-size: 0.75rem; color: #999; margin-top: 10px;">※ 點擊變為紅色代表前台會顯示「售完」</p>
 </div>
 
 <script type="module">
@@ -72,28 +64,42 @@
         const orderList = document.getElementById('order-list');
         let totalAmount = 0, totalQty = 0;
         orderList.innerHTML = "";
+        
         snapshot.forEach((orderDoc) => {
             const data = orderDoc.data();
             const isDone = data.status === "已完成";
+            
+            // 計算份數
             let qty = 0;
             const matches = (data.items || "").match(/x\s*(\d+)/g);
             if (matches) matches.forEach(m => qty += parseInt(m.replace('x', '')));
-            totalAmount += (Number(data.total) || 0); totalQty += qty;
+            
+            // 重要：修正計算邏輯，確保 total 是數字
+            const orderTotal = Number(data.total) || 0;
+            totalAmount += orderTotal;
+            totalQty += qty;
 
             const div = document.createElement('div');
             div.className = `order-card ${isDone ? 'completed' : ''}`;
-            div.innerHTML = `<div class="order-badge">#${data.orderNo || '?'}</div><div style="font-size:0.8rem;color:#888;">${data.time}</div><div class="order-items">${data.items}</div>
+            div.innerHTML = `
+                <div class="order-badge">#${data.orderNo || '?'}</div>
+                <div style="font-size:0.8rem;color:#888;">${data.time}</div>
+                <div class="order-items">${data.items}</div>
                 <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <div style="color:#d32f2f; font-weight:bold;">$${data.total} <small>(${qty}份)</small></div>
-                    <div>${!isDone ? `<button style="background:#2ecc71; color:white; border:none; padding:8px 12px; border-radius:5px; font-weight:bold;" onclick="updateStatus('${orderDoc.id}', '已完成')">完成</button>` : ''}
-                    <button style="background:#eee; border:none; padding:8px 12px; border-radius:5px; color:#888;" onclick="cancelOrder('${orderDoc.id}')">取消</button></div>
+                    <div style="color:#d32f2f; font-weight:bold;">$${orderTotal} <small>(${qty}份)</small></div>
+                    <div>
+                        ${!isDone ? `<button style="background:#2ecc71; color:white; border:none; padding:8px 12px; border-radius:5px; font-weight:bold;" onclick="updateStatus('${orderDoc.id}', '已完成')">完成</button>` : ''}
+                        <button style="background:#eee; border:none; padding:8px 12px; border-radius:5px; color:#888;" onclick="cancelOrder('${orderDoc.id}')">取消/刪除</button>
+                    </div>
                 </div>`;
             orderList.appendChild(div);
         });
+        
         document.getElementById('daily-total').innerText = totalAmount;
         document.getElementById('daily-qty').innerText = totalQty;
     });
 
+    // 品項開關邏輯保持不變...
     onSnapshot(doc(db, "settings", "menuStatus"), (docSnap) => {
         const soldOut = docSnap.exists() ? docSnap.data().soldOut || [] : [];
         document.getElementById('stock-manager').innerHTML = allNames.map(name => {
@@ -113,9 +119,9 @@
         await setDoc(docRef, { soldOut: currentSoldOut });
     };
 
-    window.resetAllOrders = async () => { if(confirm("⚠️ 確定清空數據？序號將從 #1 開始。")) { const q = await getDocs(collection(db, "orders")); const b = writeBatch(db); q.forEach(d => b.delete(d.ref)); await b.commit(); } };
+    window.resetAllOrders = async () => { if(confirm("確定清空今天所有訂單？")) { const q = await getDocs(collection(db, "orders")); const b = writeBatch(db); q.forEach(d => b.delete(d.ref)); await b.commit(); } };
     window.updateStatus = async (id, s) => await updateDoc(doc(db, "orders", id), { status: s });
-    window.cancelOrder = async (id) => { if(confirm("確定取消？")) await deleteDoc(doc(db, "orders", id)); };
+    window.cancelOrder = async (id) => { if(confirm("確定刪除這筆訂單？")) await deleteDoc(doc(db, "orders", id)); };
 </script>
 </body>
 </html>

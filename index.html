@@ -5,62 +5,53 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>小紅帽雞蛋糕點餐系統</title>
     <style>
-        :root { --red: #d32f2f; --yellow: #fbc02d; --bg: #fffde7; }
-        body { font-family: sans-serif; margin: 0; background: var(--bg); padding-bottom: 140px; -webkit-user-select: none; }
-        .header { background: var(--red); color: white; text-align: center; padding: 15px; position: sticky; top: 0; z-index: 100; }
-        .container { padding: 12px; max-width: 500px; margin: auto; }
-        .section-title { background: var(--yellow); padding: 8px 15px; font-weight: bold; margin: 15px 0; border-radius: 0 20px 20px 0; display: inline-block; font-size: 0.9rem; }
-        
-        .item-card { background: white; border-radius: 15px; padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: relative; overflow: hidden; }
-        .item-card.sold-out { background: #f0f0f0; opacity: 0.7; }
-        .item-info h4 { margin: 0; font-size: 1.05rem; color: #444; }
-        .item-info p { margin: 4px 0 0; color: var(--red); font-weight: bold; font-size: 1.1rem; }
-        
-        .sold-out-label { position: absolute; right: 20px; top: 50%; transform: translateY(-50%) rotate(-10deg); border: 2px solid var(--red); color: var(--red); padding: 4px 10px; border-radius: 5px; font-weight: bold; background: rgba(255,255,255,0.9); }
-
-        .controls { display: flex; align-items: center; gap: 15px; }
-        .btn-circle { width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--red); background: white; color: var(--red); font-size: 24px; font-weight: bold; display: flex; align-items: center; justify-content: center; cursor: pointer; outline: none; }
-        .btn-circle.active { background: var(--red); color: white; }
-        .qty { font-weight: bold; min-width: 25px; text-align: center; font-size: 1.2rem; }
-        
-        .cart-bar { position: fixed; bottom: 0; width: 100%; max-width: 500px; left: 50%; transform: translateX(-50%); background: white; padding: 15px 20px 30px; box-sizing: border-box; box-shadow: 0 -5px 15px rgba(0,0,0,0.1); border-radius: 20px 20px 0 0; z-index: 100; }
-        .total-price { color: var(--red); font-size: 1.6rem; font-weight: 900; }
-        .btn-submit { width: 100%; background: #333; color: white; border: none; padding: 16px; border-radius: 12px; font-size: 1.1rem; font-weight: bold; cursor: pointer; }
-        
-        #overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:200; align-items: center; justify-content: center; }
-        .ticket { background: white; width: 85%; max-height: 85vh; overflow-y: auto; padding: 25px; border-radius: 25px; text-align: center; box-sizing: border-box; }
-        .order-num { font-size: 4rem; color: var(--red); font-weight: 900; margin: 15px 0; border: 3px dashed var(--yellow); border-radius: 15px; padding: 10px; }
-        
-        .btn-line { background: #06C755; color: white; border: none; padding: 12px; width: 100%; border-radius: 10px; font-weight: bold; margin-top: 10px; text-decoration: none; display: inline-block; box-sizing: border-box; }
+        body { font-family: -apple-system, sans-serif; background: #FFF9E1; margin: 0; padding: 0; padding-bottom: 80px; }
+        .header { background: #d32f2f; color: white; padding: 25px 20px; text-align: center; }
+        .header h1 { margin: 0; font-size: 2rem; letter-spacing: 2px; }
+        .category-title { background: #FBC02D; display: inline-block; padding: 5px 20px; border-radius: 20px; font-weight: bold; margin: 20px 15px 10px; }
+        .menu-item { background: white; margin: 10px 15px; padding: 15px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .item-info b { font-size: 1.1rem; color: #333; }
+        .item-info span { color: #d32f2f; font-weight: bold; margin-left: 10px; }
+        .qty-controls { display: flex; align-items: center; gap: 12px; }
+        .btn-qty { width: 30px; height: 30px; border-radius: 50%; border: 1px solid #ccc; background: white; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; }
+        .cart-bar { position: fixed; bottom: 0; width: 100%; background: white; padding: 15px; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; }
+        .btn-submit { background: #d32f2f; color: white; padding: 12px 25px; border-radius: 25px; border: none; font-weight: bold; font-size: 1.1rem; }
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 100; }
+        .ticket { background: white; width: 85%; padding: 25px; border-radius: 20px; text-align: center; }
+        .order-num { font-size: 3rem; font-weight: 900; color: #333; margin: 10px 0; }
+        .pay-btn { width: 100%; padding: 15px; border-radius: 12px; border: none; font-weight: bold; margin-bottom: 10px; font-size: 1.1rem; cursor: pointer; }
+        .btn-linepay { background: #00B900; color: white; }
+        .btn-cash { background: #666; color: white; }
+        .qr-img { width: 100%; max-width: 200px; margin: 15px auto; display: block; border: 1px solid #eee; }
     </style>
 </head>
 <body>
 
 <div class="header">
-    <h2 style="margin:0; letter-spacing: 2px;">小紅帽雞蛋糕</h2>
-    <div style="font-size:0.8rem; margin-top:4px; opacity: 0.9;">現點現做 • 美味值得等待</div>
+    <h1>小紅帽雞蛋糕</h1>
+    <p>現點現做 ・ 美味值得等待</p>
 </div>
 
-<div class="container">
-    <div class="section-title">經典單一口味 (每份5顆)</div>
-    <div id="single-menu"></div>
-    <div class="section-title">超值混搭 (3+2 顆)</div>
-    <div id="mix-menu"></div>
+<div id="menu-container">
+    <div class="category-title">經典單一口味 (每份5顆)</div>
+    <div id="single-list"></div>
+    <div class="category-title">超值混搭 (3+2 顆)</div>
+    <div id="mix-list"></div>
 </div>
 
 <div class="cart-bar">
-    <div style="display:flex; justify-content:space-between; margin-bottom:10px; align-items: center;">
-        <span style="color:#666;">已選：<strong id="total-qty">0</strong> 份</span>
-        <span class="total-price">$<span id="total-amount">0</span></span>
-    </div>
-    <button class="btn-submit" onclick="showReview()">確認送出訂單</button>
+    <div>總金額：<span id="cart-total" style="font-size:1.5rem; color:#d32f2f; font-weight:bold;">$0</span></div>
+    <button class="btn-submit" onclick="showPaySelect()">送出訂單</button>
 </div>
 
-<div id="overlay"><div class="ticket" id="ticket-content"></div></div>
+<div id="overlay" class="overlay">
+    <div id="ticket-content" class="ticket">
+        </div>
+</div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, onSnapshot, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, serverTimestamp, onSnapshot, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyAbG0YttR57SQ5Xr_xPTKY1DoVgPtcnJzc",
@@ -73,131 +64,133 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-    
+
     const menuData = {
         single: [
             { id: 's1', name: "古早原味", price: 40 }, { id: 's2', name: "爆漿奶油", price: 45 },
-            { id: 's3', name: "熔岩巧克力", price: 45 }, { id: 's4', name: "肉鬆沙拉", price: 45 },
+            { id: 's3', name: "熔岩巧克力", price: 45 }, { id: 's4', name: "肉鬆沙拉", price: 50 },
             { id: 's5', name: "黃金起司", price: 50 }, { id: 's6', name: "玉米起司", price: 50 },
-            { id: 's7', name: "鮪魚起司", price: 50 }, { id: 's8', name: "半月OREO", price: 55 },
+            { id: 's7', name: "鮪魚起司", price: 55 }, { id: 's8', name: "半月OREO", price: 50 },
             { id: 's9', name: "蛋黃奶酥", price: 55 }
         ],
         mix: [
-            { id: 'm1', name: "奶油 + 巧克力", price: 45 }, { id: 'm2', name: "奶油 + 肉鬆", price: 45 },
-            { id: 'm3', name: "肉鬆 + 巧克力", price: 45 }, { id: 'm4', name: "起司 + 玉米", price: 50 },
-            { id: 'm5', name: "起司 + 鮪魚", price: 50 }, { id: 'm6', name: "玉米 + 鮪魚", price: 50 },
+            { id: 'm1', name: "奶油 + 巧克力", price: 45 }, { id: 'm2', name: "奶油 + 肉鬆", price: 50 },
+            { id: 'm3', name: "肉鬆 + 巧克力", price: 50 }, { id: 'm4', name: "起司 + 玉米", price: 50 },
+            { id: 'm5', name: "起司 + 鮪魚", price: 55 }, { id: 'm6', name: "玉米 + 鮪魚", price: 55 },
             { id: 'm7', name: "OREO + 奶酥", price: 55 }
         ]
     };
 
     window.cart = {};
-    let soldOutItems = [];
+    let soldOutList = [];
 
+    // 監聽售完狀態
     onSnapshot(doc(db, "settings", "menuStatus"), (docSnap) => {
-        soldOutItems = docSnap.exists() ? docSnap.data().soldOut || [] : [];
-        window.render();
+        soldOutList = docSnap.exists() ? docSnap.data().soldOut || [] : [];
+        renderMenu();
     });
 
-    window.render = () => {
-        document.getElementById('single-menu').innerHTML = menuData.single.map(item => createItemHtml(item)).join('');
-        document.getElementById('mix-menu').innerHTML = menuData.mix.map(item => createItemHtml(item)).join('');
-    };
-
-    function createItemHtml(item) {
-        const count = window.cart[item.id] || 0;
-        const isSoldOut = soldOutItems.includes(item.name);
-        return `
-            <div class="item-card ${isSoldOut ? 'sold-out' : ''}">
-                <div class="item-info">
-                    <h4>${item.name}</h4>
-                    <p>${isSoldOut ? '售完' : '$' + item.price}</p>
-                </div>
-                ${isSoldOut ? '<div class="sold-out-label">今日售完</div>' : `
-                    <div class="controls">
-                        ${count > 0 ? `<button class="btn-circle" onclick="changeQty('${item.id}', -1)">-</button>` : ''}
-                        ${count > 0 ? `<span class="qty">${count}</span>` : ''}
-                        <button class="btn-circle active" onclick="changeQty('${item.id}', 1)">+</button>
-                    </div>
-                `}
-            </div>`;
+    function renderMenu() {
+        const renderList = (data, containerId) => {
+            document.getElementById(containerId).innerHTML = data.map(item => {
+                const isSoldOut = soldOutList.includes(item.name);
+                return `
+                    <div class="menu-item" style="${isSoldOut ? 'opacity:0.5;' : ''}">
+                        <div class="item-info">
+                            <b>${item.name}</b><span>$${item.price}</span>
+                            ${isSoldOut ? '<br><small style="color:red;">今日售完</small>' : ''}
+                        </div>
+                        <div class="qty-controls">
+                            ${!isSoldOut ? `
+                                <button class="btn-qty" onclick="updateQty('${item.id}', -1)">-</button>
+                                <span id="qty-${item.id}" style="font-weight:bold; min-width:20px; text-align:center;">0</span>
+                                <button class="btn-qty" onclick="updateQty('${item.id}', 1)">+</button>
+                            ` : ''}
+                        </div>
+                    </div>`;
+            }).join('');
+        };
+        renderList(menuData.single, 'single-list');
+        renderList(menuData.mix, 'mix-list');
     }
 
-    window.changeQty = (id, delta) => {
-        window.cart[id] = (window.cart[id] || 0) + delta;
+    window.updateQty = (id, change) => {
+        window.cart[id] = (window.cart[id] || 0) + change;
         if (window.cart[id] <= 0) delete window.cart[id];
-        updateUI();
+        document.getElementById(`qty-${id}`).innerText = window.cart[id] || 0;
+        
+        let total = 0;
+        const all = [...menuData.single, ...menuData.mix];
+        Object.keys(window.cart).forEach(id => {
+            const item = all.find(i => i.id === id);
+            total += item.price * window.cart[id];
+        });
+        document.getElementById('cart-total').innerText = `$${total}`;
     };
 
-    function updateUI() {
-        let q = 0, a = 0;
-        const all = [...menuData.single, ...menuData.mix];
-        Object.keys(window.cart).forEach(id => {
-            const item = all.find(i => i.id === id);
-            if(item) { q += window.cart[id]; a += item.price * window.cart[id]; }
-        });
-        document.getElementById('total-qty').innerText = q;
-        document.getElementById('total-amount').innerText = a;
-        window.render();
-    }
-
-    window.showReview = async () => {
-        if (parseInt(document.getElementById('total-qty').innerText) === 0) return alert("請先選購餐點");
-        const qSnap = await getDocs(collection(db, "orders"));
-        const nextNo = qSnap.size + 1;
-        const all = [...menuData.single, ...menuData.mix];
-        let listHtml = '', total = 0;
-        Object.keys(window.cart).forEach(id => {
-            const item = all.find(i => i.id === id);
-            if(item) {
-                total += item.price * window.cart[id];
-                listHtml += `<div style="display:flex; justify-content:space-between; margin-bottom:8px;"><span>${item.name} x ${window.cart[id]}</span><span>$${item.price * window.cart[id]}</span></div>`;
-            }
-        });
-        document.getElementById('ticket-content').innerHTML = `
-            <h3>核對訂單內容</h3>
-            <div style="text-align:left; border-top:1px dashed #ccc; padding:15px 0;">${listHtml}</div>
-            <div style="font-weight:bold; color:var(--red); font-size:1.4rem; margin-bottom:15px;">總計 $${total}</div>
-            <button style="background:var(--red); color:white; border:none; padding:16px; width:100%; border-radius:12px; font-weight:bold; font-size:1.1rem;" onclick="finalSubmit(${total}, ${nextNo})">送出點餐 (不可取消)</button>
-            <button style="background:#eee; border:none; padding:10px; width:100%; border-radius:10px; margin-top:10px; color:#666;" onclick="document.getElementById('overlay').style.display='none'">返回修改</button>`;
+    window.showPaySelect = () => {
+        const total = document.getElementById('cart-total').innerText.replace('$', '');
+        if (total === "0") return alert("請先選擇餐點");
+        
         document.getElementById('overlay').style.display = 'flex';
+        document.getElementById('ticket-content').innerHTML = `
+            <h2 style="margin-top:0;">確認訂單金額</h2>
+            <p style="font-size:1.5rem; color:#d32f2f; font-weight:bold; margin:15px 0;">總計 $${total}</p>
+            <p style="font-weight:bold; color:#666;">請選擇付款方式：</p>
+            <button class="pay-btn btn-linepay" onclick="submitOrder('Line Pay', ${total})">🟢 LINE Pay 付款</button>
+            <button class="pay-btn btn-cash" onclick="submitOrder('現場付款', ${total})">🏠 現場現金付款</button>
+            <button style="background:none; border:none; color:#888; margin-top:10px;" onclick="document.getElementById('overlay').style.display='none'">返回修改</button>
+        `;
     };
 
-    window.finalSubmit = async (t, no) => {
-        const all = [...menuData.single, ...menuData.mix];
+    window.submitOrder = async (method, total) => {
+        const orderNo = Math.floor(100 + Math.random() * 900);
         let itemsString = "";
+        const all = [...menuData.single, ...menuData.mix];
         Object.keys(window.cart).forEach(id => {
             const item = all.find(i => i.id === id);
-            if(item) { itemsString += `${item.name} x ${window.cart[id]} `; }
+            itemsString += `${item.name}x${window.cart[id]} `;
         });
 
         try {
-            await addDoc(collection(db, "orders"), {
-                orderNo: no,
+            const docRef = await addDoc(collection(db, "orders"), {
+                orderNo: orderNo,
                 items: itemsString,
+                total: total,
+                payMethod: method,
                 status: "準備中",
-                total: Number(t),
                 time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
                 timestamp: serverTimestamp()
             });
 
-            // 準備 LINE 訊息文字
-            const msg = `【小紅帽雞蛋糕】點餐成功！\n取餐編號：#${no}\n明細：${itemsString}\n總金額：$${t}\n---\n現點現做，請耐心等候取餐。`;
-            const lineUrl = `https://line.me/R/msg/text/?${encodeURIComponent(msg)}`;
-
-            document.getElementById('ticket-content').innerHTML = `
-                <h2 style="color:#2ecc71; margin-bottom:5px;">✓ 訂單已發送</h2>
-                <p style="color:#666; font-size:0.9rem;">請記住編號或截圖存根聯</p>
-                <div class="order-num">#${no}</div>
-                <div style="text-align:left; background:#f9f9f9; padding:12px; border-radius:10px; font-size:0.9rem; margin-bottom:15px;">
-                    <strong>點餐內容：</strong><br>${itemsString}<br>
-                    <strong>合計：$${t}</strong>
-                </div>
-                <a href="${lineUrl}" class="btn-line">傳送到我的 LINE (留存紀錄)</a>
-                <p style="font-size:0.75rem; color:#999; margin:15px 0;">截圖此畫面也可以喔！</p>
-                <button style="width:100%; padding:15px; border-radius:12px; border:none; background:#333; color:white; font-weight:bold;" onclick="location.reload()">好的</button>`;
-            window.cart = {}; 
+            showFinalTicket(orderNo, total, method);
         } catch (e) { alert("送出失敗，請檢查網路"); }
     };
+
+    function showFinalTicket(no, total, method) {
+        let payInfo = "";
+        if (method === 'Line Pay') {
+            payInfo = `
+                <div style="border:2px solid #00B900; padding:10px; border-radius:15px; margin-top:10px; background:#f0fff0;">
+                    <p style="color:#00B900; font-weight:bold; margin-bottom:5px;">請掃描下方付款 $${total}</p>
+                    <img class="qr-img" src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://line.me/R/nv/payment/">
+                    <p style="font-size:0.8rem; color:#666;">(長按圖片可儲存，再至 LINE 掃描)</p>
+                </div>`;
+        } else {
+            payInfo = `<div style="background:#e3f2fd; padding:15px; border-radius:15px; margin-top:10px; color:#1565c0; font-weight:bold;">取餐時請現場付 $${total}</div>`;
+        }
+
+        document.getElementById('ticket-content').innerHTML = `
+            <h2 style="color:#2ecc71; margin-top:0;">✓ 訂單已送出</h2>
+            <p style="margin:0; color:#888;">您的取餐編號</p>
+            <div class="order-num">#${no}</div>
+            <div style="background:#fff9c4; padding:10px; border-radius:10px; margin-bottom:10px; font-weight:bold;">
+                付款方式：${method}
+            </div>
+            ${payInfo}
+            <button class="pay-btn btn-cash" style="margin-top:20px;" onclick="location.reload()">好的，回首頁</button>
+        `;
+    }
 </script>
 </body>
 </html>

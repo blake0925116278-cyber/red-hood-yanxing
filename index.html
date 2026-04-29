@@ -14,7 +14,7 @@
         .qty-controls { display: flex; align-items: center; gap: 10px; }
         .btn-qty { width: 30px; height: 30px; border-radius: 50%; border: 1px solid #ccc; background: #fff; font-size: 1.2rem; }
         .custom-mix-box { background: #fff; margin: 10px 15px; padding: 15px; border-radius: 12px; border: 2px dashed #FBC02D; }
-        select { width: 100%; padding: 10px; border-radius: 8px; margin: 5px 0 10px; background: #fff; border: 1px solid #ddd; font-size: 1rem; }
+        select { width: 100%; padding: 12px; border-radius: 8px; margin: 8px 0 12px; background: #fff; border: 1px solid #ddd; font-size: 1rem; }
         .cart-bar { position: fixed; bottom: 0; width: 100%; background: white; padding: 15px; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; z-index: 99; }
         .btn-submit { background: #d32f2f; color: white; padding: 10px 20px; border-radius: 20px; border: none; font-weight: bold; }
         .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 100; }
@@ -34,13 +34,18 @@
     <div class="category-title">超值快選混搭 (3+2顆)</div>
     <div id="mix-list"></div>
 
-    <div class="category-title">✨ 自由配混搭 (取價高者)</div>
+    <div class="category-title">✨ 自由配混搭 (共5顆)</div>
     <div class="custom-mix-box">
-        <p style="margin:0; font-size:0.9rem; color:#666;">任選兩個口味，依較高價者計費</p>
-        <select id="mix-a"><option value="">-- 口味 A (3顆) --</option></select>
-        <select id="mix-b"><option value="">-- 口味 B (2顆) --</option></select>
-        <button onclick="addCustomMix()" style="width:100%; padding:10px; background:#FBC02D; border:none; border-radius:8px; font-weight:bold;">加入自選混搭 🛒</button>
-        <div id="custom-mix-cart" style="margin-top:10px; font-size:0.9rem;"></div>
+        <p style="margin:0; font-size:0.9rem; color:#d32f2f; font-weight:bold;">★ 取兩口味中較高價者計費</p>
+        
+        <label style="font-size:0.85rem; color:#666; display:block; margin-top:10px;">第一種口味 (3顆)：</label>
+        <select id="mix-a"><option value="">-- 請選擇口味 A --</option></select>
+        
+        <label style="font-size:0.85rem; color:#666; display:block;">第二種口味 (2顆)：</label>
+        <select id="mix-b"><option value="">-- 請選擇口味 B --</option></select>
+        
+        <button onclick="addCustomMix()" style="width:100%; padding:12px; background:#FBC02D; border:none; border-radius:8px; font-weight:bold; font-size:1rem; margin-top:5px;">加入自選混搭 🛒</button>
+        <div id="custom-mix-cart" style="margin-top:10px;"></div>
     </div>
 </div>
 
@@ -135,15 +140,16 @@
 
     window.addCustomMix = () => {
         const a = document.getElementById('mix-a').value, b = document.getElementById('mix-b').value;
-        if(!a || !b) return alert("請選兩個口味");
+        if(!a || !b) return alert("請選好兩種口味喔！");
         const pa = [...baseMenu, limited].find(i=>i.name===a).price, pb = [...baseMenu, limited].find(i=>i.name===b).price;
-        customMixes.push({ name: `[自選]${a}+${b}`, price: Math.max(pa, pb) });
+        customMixes.push({ name: `[自選]${a}(3)+${b}(2)`, price: Math.max(pa, pb) });
         renderCustom(); calc();
+        document.getElementById('mix-a').value = ""; document.getElementById('mix-b').value = "";
     };
 
     window.removeCustom = (i) => { customMixes.splice(i,1); renderCustom(); calc(); };
     function renderCustom() {
-        document.getElementById('custom-mix-cart').innerHTML = customMixes.map((m,i)=>`<div style="display:flex;justify-content:space-between;margin-top:5px;background:#fff9c4;padding:5px;border-radius:5px;"><span>${m.name} $${m.price}</span><span onclick="removeCustom(${i})" style="color:red;font-weight:bold;cursor:pointer;">移除</span></div>`).join('');
+        document.getElementById('custom-mix-cart').innerHTML = customMixes.map((m,i)=>`<div style="display:flex;justify-content:space-between;margin-top:5px;background:#fff9c4;padding:8px;border-radius:8px;"><span>${m.name} <b>$${m.price}</b></span><span onclick="removeCustom(${i})" style="color:red;font-weight:bold;cursor:pointer;">移除</span></div>`).join('');
     }
 
     function calc() {
@@ -155,13 +161,13 @@
 
     window.showPaySelect = () => {
         const t = document.getElementById('cart-total').innerText;
-        if(t==="$0") return;
+        if(t==="$0") return alert("購物車是空的喔！");
         document.getElementById('overlay').style.display = 'flex';
         document.getElementById('ticket-content').innerHTML = `
-            <h3>結帳金額 ${t}</h3><p>請選擇付款方式：</p>
-            <button class="pay-btn" style="background:#00B900;color:white;" onclick="submit('Line Pay','${t}')">📱 LINE Pay</button>
-            <button class="pay-btn" style="background:#666;color:white;" onclick="submit('現場付款','${t}')">💰 現場現金</button>
-            <button style="background:none;border:none;color:#888;" onclick="document.getElementById('overlay').style.display='none'">返回修改</button>
+            <h3 style="margin-top:0;">結帳金額 ${t}</h3><p>請選擇付款方式：</p>
+            <button class="pay-btn" style="background:#00B900;color:white;" onclick="submit('Line Pay','${t}')">📱 LINE Pay 付款</button>
+            <button class="pay-btn" style="background:#666;color:white;" onclick="submit('現場付款','${t}')">💰 現場現金付款</button>
+            <button style="background:none;border:none;color:#888;margin-top:10px;" onclick="document.getElementById('overlay').style.display='none'">返回修改</button>
         `;
     };
 
@@ -173,7 +179,7 @@
         await addDoc(collection(db, "orders"), { orderNo: no, items: items.join(', '), total: t, payMethod: m, status: "準備中", time: new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}), timestamp: serverTimestamp() });
         
         let info = m === 'Line Pay' ? `<div style="color:#00B900;font-weight:bold;border:2px solid;padding:15px;margin:10px 0;text-align:left;line-height:1.6;">1. 請掃描店內 LINE Pay 碼<br>2. 輸入金額 ${t}<br>3. 付款後請出示畫面給老闆確認</div>` : `<div style="color:#1565c0;background:#e3f2fd;padding:10px;margin:10px 0;">請至櫃檯現場支付 ${t}</div>`;
-        document.getElementById('ticket-content').innerHTML = `<h2 style="color:#2ecc71;">✓ 訂單已送出</h2><p style="margin:0;">取餐編號</p><div class="order-num">#${no}</div>${info}<button class="pay-btn" style="background:#d32f2f;color:white;margin-top:10px;" onclick="location.reload()">回首頁</button>`;
+        document.getElementById('ticket-content').innerHTML = `<h2 style="color:#2ecc71;">✓ 訂單已送出</h2><p style="margin:0;">您的取餐編號</p><div class="order-num">#${no}</div>${info}<button class="pay-btn" style="background:#d32f2f;color:white;margin-top:10px;" onclick="location.reload()">回首頁</button>`;
     };
 </script>
 </body>

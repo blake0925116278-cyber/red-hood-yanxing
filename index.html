@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>小紅帽雞蛋糕鹽行店</title>
+    <title>小紅帽雞蛋糕點餐系統</title>
     <style>
         :root { --red: #d32f2f; --yellow: #fbc02d; --bg: #fffde7; }
         body { font-family: sans-serif; margin: 0; background: var(--bg); padding-bottom: 140px; -webkit-user-select: none; }
@@ -12,23 +12,21 @@
         .section-title { background: var(--yellow); padding: 8px 15px; font-weight: bold; margin: 15px 0; border-radius: 0 20px 20px 0; display: inline-block; font-size: 0.9rem; }
         
         .item-card { background: white; border-radius: 15px; padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: relative; overflow: hidden; }
+        .item-card.sold-out { background: #f0f0f0; opacity: 0.7; }
         .item-info h4 { margin: 0; font-size: 1.05rem; color: #444; }
         .item-info p { margin: 4px 0 0; color: var(--red); font-weight: bold; font-size: 1.1rem; }
         
-        /* 售完狀態樣式 */
-        .item-card.sold-out { background: #f0f0f0; opacity: 0.7; }
-        .item-card.sold-out .item-info h4 { color: #888; }
-        .item-card.sold-out .price-tag { color: #999; font-size: 0.9rem; }
-        .sold-out-label { position: absolute; right: 20px; top: 50%; transform: translateY(-50%) rotate(-10deg); border: 2px solid #d32f2f; color: #d32f2f; padding: 4px 10px; border-radius: 5px; font-weight: bold; z-index: 10; background: rgba(255,255,255,0.8); }
+        /* 售完蓋章標籤 */
+        .sold-out-label { position: absolute; right: 20px; top: 50%; transform: translateY(-50%) rotate(-10deg); border: 2px solid var(--red); color: var(--red); padding: 4px 10px; border-radius: 5px; font-weight: bold; z-index: 10; background: rgba(255,255,255,0.8); }
 
         .controls { display: flex; align-items: center; gap: 15px; }
-        .btn-circle { width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--red); background: white; color: var(--red); font-size: 24px; font-weight: bold; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .btn-circle { width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--red); background: white; color: var(--red); font-size: 24px; font-weight: bold; display: flex; align-items: center; justify-content: center; cursor: pointer; outline: none; }
         .btn-circle.active { background: var(--red); color: white; }
         .qty { font-weight: bold; min-width: 25px; text-align: center; font-size: 1.2rem; }
         
         .cart-bar { position: fixed; bottom: 0; width: 100%; max-width: 500px; left: 50%; transform: translateX(-50%); background: white; padding: 15px 20px 30px; box-sizing: border-box; box-shadow: 0 -5px 15px rgba(0,0,0,0.1); border-radius: 20px 20px 0 0; z-index: 100; }
         .total-price { color: var(--red); font-size: 1.6rem; font-weight: 900; }
-        .btn-submit { width: 100%; background: #333; color: white; border: none; padding: 16px; border-radius: 12px; font-size: 1.1rem; font-weight: bold; }
+        .btn-submit { width: 100%; background: #333; color: white; border: none; padding: 16px; border-radius: 12px; font-size: 1.1rem; font-weight: bold; cursor: pointer; }
         
         #overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:200; align-items: center; justify-content: center; }
         .ticket { background: white; width: 85%; max-height: 80vh; overflow-y: auto; padding: 25px; border-radius: 25px; text-align: center; box-sizing: border-box; }
@@ -39,7 +37,7 @@
 
 <div class="header">
     <h2 style="margin:0; letter-spacing: 2px;">小紅帽雞蛋糕</h2>
-    <div style="font-size:0.8rem; margin-top:4px; opacity: 0.9;">鹽行店 • 點餐系統</div>
+    <div style="font-size:0.8rem; margin-top:4px; opacity: 0.9;">鹽行店 • 手機點餐</div>
 </div>
 
 <div class="container">
@@ -94,6 +92,7 @@
     window.cart = {};
     let soldOutItems = [];
 
+    // 監聽後台設定的售完狀態
     onSnapshot(doc(db, "settings", "menuStatus"), (docSnap) => {
         soldOutItems = docSnap.exists() ? docSnap.data().soldOut || [] : [];
         window.render();
@@ -111,7 +110,7 @@
             <div class="item-card ${isSoldOut ? 'sold-out' : ''}">
                 <div class="item-info">
                     <h4>${item.name}</h4>
-                    <p class="price-tag">${isSoldOut ? 'SOLD OUT' : '$' + item.price}</p>
+                    <p>${isSoldOut ? '已售完' : '$' + item.price}</p>
                 </div>
                 ${isSoldOut ? '<div class="sold-out-label">今日售完</div>' : `
                     <div class="controls">
@@ -134,7 +133,10 @@
         const all = [...menuData.single, ...menuData.mix];
         Object.keys(window.cart).forEach(id => {
             const item = all.find(i => i.id === id);
-            if(item) { q += window.cart[id]; a += item.price * window.cart[id]; }
+            if(item) { 
+                q += window.cart[id]; 
+                a += item.price * window.cart[id]; 
+            }
         });
         document.getElementById('total-qty').innerText = q;
         document.getElementById('total-amount').innerText = a;
@@ -142,34 +144,68 @@
     }
 
     window.showReview = async () => {
-        if (document.getElementById('total-qty').innerText === "0") return alert("請先選購餐點");
+        const currentQty = parseInt(document.getElementById('total-qty').innerText);
+        if (currentQty === 0) return alert("請先選購餐點");
+        
         const qSnap = await getDocs(collection(db, "orders"));
         const nextNo = qSnap.size + 1;
         const all = [...menuData.single, ...menuData.mix];
         let listHtml = '', total = 0;
+        
         Object.keys(window.cart).forEach(id => {
             const item = all.find(i => i.id === id);
-            total += item.price * window.cart[id];
-            listHtml += `<div style="display:flex; justify-content:space-between; margin-bottom:8px;"><span>${item.name} x ${window.cart[id]}</span></div>`;
+            if(item) {
+                total += item.price * window.cart[id];
+                listHtml += `<div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                                <span>${item.name} x ${window.cart[id]}</span>
+                                <span>$${item.price * window.cart[id]}</span>
+                             </div>`;
+            }
         });
+
         document.getElementById('ticket-content').innerHTML = `
-            <h3>核對明細</h3><div style="text-align:left; border-top:1px dashed #ccc; padding:15px 0;">${listHtml}</div>
-            <div style="font-weight:bold; color:var(--red); font-size:1.2rem;">總計 $${total}</div>
-            <button style="background:var(--red); color:white; border:none; padding:15px; width:100%; border-radius:12px; margin-top:15px; font-weight:bold;" onclick="finalSubmit(${total}, ${nextNo})">確認送出</button>
-            <button style="background:#eee; border:none; padding:10px; width:100%; border-radius:10px; margin-top:10px;" onclick="document.getElementById('overlay').style.display='none'">返回加點</button>`;
+            <h3>核對明細</h3>
+            <div style="text-align:left; border-top:1px dashed #ccc; padding:15px 0;">${listHtml}</div>
+            <div style="font-weight:bold; color:var(--red); font-size:1.4rem; margin-bottom:15px;">總計 $${total}</div>
+            <button style="background:var(--red); color:white; border:none; padding:16px; width:100%; border-radius:12px; font-weight:bold; font-size:1.1rem;" onclick="finalSubmit(${total}, ${nextNo})">確認送出訂單</button>
+            <button style="background:#eee; border:none; padding:10px; width:100%; border-radius:10px; margin-top:10px; color:#666;" onclick="document.getElementById('overlay').style.display='none'">返回加點</button>`;
         document.getElementById('overlay').style.display = 'flex';
     };
 
     window.finalSubmit = async (t, no) => {
         const all = [...menuData.single, ...menuData.mix];
         let itemsString = "";
-        Object.keys(window.cart).forEach(id => { itemsString += `${all.find(i => i.id === id).name} x ${window.cart[id]} `; });
-        await addDoc(collection(db, "orders"), {
-            orderNo: no, items: itemsString, status: "準備中", total: t,
-            time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
-            timestamp: serverTimestamp()
+        Object.keys(window.cart).forEach(id => {
+            const item = all.find(i => i.id === id);
+            if(item) {
+                itemsString += `${item.name} x ${window.cart[id]} `;
+            }
         });
-        document.getElementById('ticket-content').innerHTML = `<h3>✓ 訂單已發送</h3><p>取餐編號</p><div class="order-num">#${no}</div><button style="width:100%; padding:15px; border-radius:12px; border:none; background:#eee;" onclick="location.reload()">完成</button>`;
+
+        try {
+            await addDoc(collection(db, "orders"), {
+                orderNo: no,
+                items: itemsString,
+                status: "準備中",
+                total: Number(t), // 確保存入的是數字，修復 $0 問題
+                time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+                timestamp: serverTimestamp()
+            });
+
+            document.getElementById('ticket-content').innerHTML = `
+                <div style="padding:20px 0;">
+                    <h2 style="color:#2ecc71;">✓ 訂單已成功送出</h2>
+                    <p style="color:#666;">請向櫃檯人員出示此畫面</p>
+                    <div style="font-size:1rem; margin-top:20px;">您的取餐編號</div>
+                    <div class="order-num">#${no}</div>
+                    <p style="font-size:0.9rem; color:#999; margin-bottom:25px;">現點現做，請耐心等候</p>
+                    <button style="width:100%; padding:15px; border-radius:12px; border:none; background:#333; color:white; font-weight:bold;" onclick="location.reload()">好的，我知道了</button>
+                </div>`;
+            window.cart = {}; 
+        } catch (e) {
+            alert("系統繁忙，請稍後再試");
+            console.error(e);
+        }
     };
 </script>
 </body>

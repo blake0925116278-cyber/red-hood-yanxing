@@ -2,230 +2,170 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>小紅帽雞蛋糕點餐</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理後台 - 最新置頂版</title>
     <style>
-        body { font-family: -apple-system, sans-serif; background: #FFF9E1; margin: 0; padding-bottom: 100px; }
-        .header { background: #d32f2f; color: white; padding: 20px; text-align: center; }
-        .category-title { background: #FBC02D; display: inline-block; padding: 5px 15px; border-radius: 20px; font-weight: bold; margin: 15px; }
-        .menu-item { background: white; margin: 8px 15px; padding: 12px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .item-info b { font-size: 1.1rem; }
-        .item-info span { color: #d32f2f; font-weight: bold; margin-left: 8px; }
-        .qty-controls { display: flex; align-items: center; gap: 10px; }
-        .btn-qty { width: 30px; height: 30px; border-radius: 50%; border: 1px solid #ccc; background: #fff; font-size: 1.2rem; }
-        .mix-box { background: #fff; margin: 10px 15px; padding: 15px; border-radius: 12px; border: 2px solid #FBC02D; }
-        select { width: 100%; padding: 10px; border-radius: 8px; margin: 5px 0 10px; background: #fff; border: 1px solid #ddd; font-size: 1rem; }
-        .cart-bar { position: fixed; bottom: 0; width: 100%; background: white; padding: 15px; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; z-index: 99; }
-        .btn-submit { background: #d32f2f; color: white; padding: 10px 20px; border-radius: 20px; border: none; font-weight: bold; font-size: 1rem; cursor: pointer; }
+        body { font-family: -apple-system, sans-serif; background: #f0f0f0; padding: 10px; margin: 0; color: #333; }
+        .header { background: #333; color: #fff; padding: 10px; text-align: center; border-radius: 0 0 15px 15px; }
         
-        /* 彈出層與明細表樣式 */
-        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 100; overflow-y: auto; }
-        .ticket { background: white; width: 90%; max-width: 400px; padding: 20px; border-radius: 20px; text-align: center; box-sizing: border-box; }
-        .order-num { font-size: 4rem; font-weight: 900; margin: 15px 0; color: #d32f2f; border: 4px solid #d32f2f; display: inline-block; padding: 0 25px; border-radius: 15px; }
-        .detail-table { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 0.95rem; text-align: left; }
-        .detail-table th { border-bottom: 2px solid #eee; padding: 8px; color: #666; }
-        .detail-table td { padding: 8px; border-bottom: 1px solid #eee; }
-        .pay-btn { width: 100%; padding: 12px; border-radius: 8px; border: none; font-weight: bold; margin-bottom: 8px; font-size: 1rem; cursor: pointer; }
+        .dashboard { background: #fff; margin: 10px 5px; padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-top: 5px solid #FBC02D; }
+        .stat-row { display: flex; justify-content: space-between; align-items: center; }
+        .stat-card { text-align: left; flex: 1; }
+        .stat-card span { font-size: 0.85rem; color: #666; }
+        .stat-card b { font-size: 1.5rem; color: #d32f2f; display: block; }
+        .btn-clear { background: #d32f2f; color: #fff; border: none; border-radius: 8px; padding: 10px 15px; font-size: 0.9rem; font-weight: bold; cursor: pointer; }
+
+        /* 訂單卡片核心樣式 */
+        .order-card { 
+            background: #d32f2f; 
+            color: #fff;        
+            padding: 12px; 
+            margin-top: 12px; 
+            border-radius: 12px; 
+            position: relative; 
+            box-shadow: 0 4px 10px rgba(211, 47, 47, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        /* 完成後反白樣式 */
+        .order-card.finished { 
+            background: #ffffff; 
+            color: #888;        
+            box-shadow: none;
+            opacity: 0.6;
+            border: 1px solid #ddd;
+        }
+
+        .order-no-badge { 
+            position: absolute; right: 10px; top: 10px; 
+            background: rgba(255,255,255,0.2); 
+            color: #fff; padding: 4px 12px; border-radius: 8px; font-size: 1.4rem; font-weight: 900; 
+            border: 1px solid #fff;
+        }
+        .finished .order-no-badge { 
+            background: #eee; color: #666; border-color: #ccc; 
+        }
+        
+        .item-row { 
+            display: flex; justify-content: space-between; 
+            padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.2); font-size: 1.15rem; 
+        }
+        .finished .item-row { border-bottom-color: #eee; }
+        
+        .btn-done { 
+            border: none; padding: 10px 20px; border-radius: 8px; 
+            background: #fff; color: #d32f2f; 
+            font-weight: bold; cursor: pointer; font-size: 1.1rem; width: 100%; margin-top: 10px;
+        }
+
+        /* 底部控制區 */
+        .admin-section { background: #fff; padding: 10px; border-radius: 10px; margin: 10px 5px; font-size: 0.85rem; border: 1px solid #ddd; }
+        .stock-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)); gap: 5px; }
+        .s-btn { padding: 8px 2px; font-size: 0.8rem; border: 1px solid #ccc; border-radius: 5px; font-weight: bold; }
+        .s-btn.off { background: #ffebee; color: #d32f2f; }
+        .s-btn.on { background: #e8f5e9; color: #2e7d32; }
     </style>
 </head>
-<body>
+<body onclick="initAudio()">
 
-<div class="header"><h1>小紅帽雞蛋糕</h1><p>選好口味後請送出訂單</p></div>
+<div class="header">
+    <h3 style="margin:0;">小紅帽 訂單看板</h3>
+    <button onclick="initAudio()" id="audio-tip" style="background:#ffeb3b; border:none; padding:4px 10px; border-radius:15px; margin-top:5px; font-size:0.75rem; font-weight:bold;">🔔 語音開啟</button>
+</div>
 
-<div class="category-title">單一口味 (5顆)</div>
-<div id="single-list"></div>
-
-<div class="category-title">超值快選混搭 (3+2顆)</div>
-<div class="mix-box">
-    <label style="font-size:0.85rem; color:#666;">選擇組合：</label>
-    <select id="fixed-mix-select" onchange="updateFixedMixOptions()"></select>
-    <div id="fixed-mix-config" style="display:none; background:#fff9e1; padding:10px; border-radius:8px;">
-        <label style="font-size:0.85rem; color:#d32f2f; font-weight:bold;">誰要 3 顆？</label>
-        <select id="fixed-3btn"></select>
-        <button onclick="addFixedMix()" style="width:100%; padding:10px; background:#d32f2f; color:white; border:none; border-radius:8px; font-weight:bold;">確認加入 $ <span id="fixed-p">0</span></button>
+<div class="dashboard">
+    <div class="stat-row">
+        <div class="stat-card"><span>今日累計營收</span><b id="total-rev">$0</b></div>
+        <div class="stat-card"><span>總訂單數</span><b id="total-orders">0</b></div>
+        <button class="btn-clear" onclick="clearAllOrders()">🧹 開店歸零</button>
     </div>
 </div>
 
-<div class="category-title">✨ 自由配混搭 (共5顆)</div>
-<div class="mix-box" style="border-style: dashed;">
-    <label style="font-size:0.85rem; color:#666;">口味 A (3顆)：</label>
-    <select id="mix-a"></select>
-    <label style="font-size:0.85rem; color:#666;">口味 B (2顆)：</label>
-    <select id="mix-b"></select>
-    <button onclick="addCustomMix()" style="width:100%; padding:10px; background:#FBC02D; border:none; border-radius:8px; font-weight:bold;">加入自選混搭</button>
+<div id="list" style="padding:0 5px;"></div>
+
+<div class="admin-section" style="border-color:#d32f2f">
+    <div style="display:flex; align-items:center; gap:5px;">
+        <b>限定口味:</b>
+        <input type="text" id="ltd-n" placeholder="名稱" style="width:80px; padding:6px; border:1px solid #ddd; border-radius:4px;">
+        <input type="number" id="ltd-p" placeholder="價" style="width:45px; padding:6px; border:1px solid #ddd; border-radius:4px;">
+        <button onclick="saveLtd()" style="background:#d32f2f; color:#fff; border:none; padding:6px 12px; border-radius:4px; font-weight:bold;">存</button>
+    </div>
 </div>
 
-<div id="custom-cart-list" style="margin: 10px 15px;"></div>
-
-<div class="cart-bar">
-    <div>總計：<span id="cart-total" style="font-size:1.4rem; color:#d32f2f; font-weight:bold;">$0</span></div>
-    <button class="btn-submit" onclick="showPaySelect()">送出訂單</button>
-</div>
-
-<div id="overlay" class="overlay">
-    <div id="ticket-content" class="ticket">
-        </div>
+<div class="admin-section">
+    <div id="stock-ctrl" class="stock-grid"></div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, collection, addDoc, serverTimestamp, onSnapshot, doc, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, query, orderBy, onSnapshot, doc, setDoc, getDoc, getDocs, updateDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = { apiKey: "AIzaSyAbG0YttR57SQ5Xr_xPTKY1DoVgPtcnJzc", authDomain: "myordersystem-dee08.firebaseapp.com", projectId: "myordersystem-dee08", storageBucket: "myordersystem-dee08.firebasestorage.app", messagingSenderId: "775750661450", appId: "1:775750661450:web:e56f00456f0285c8bebdb3" };
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    const baseMenu = [
-        { name: "古早原味", price: 40 }, { name: "爆漿奶油", price: 45 }, { name: "熔岩巧克力", price: 45 },
-        { name: "肉鬆沙拉", price: 45 }, { name: "黃金起司", price: 50 }, { name: "玉米起司", price: 50 },
-        { name: "鮪魚起司", price: 50 }, { name: "半月OREO", price: 55 }, { name: "蛋黃奶酥", price: 55 }
-    ];
+    let audioReady = false; let isFirst = true;
+    window.initAudio = () => { if(!audioReady){ window.speechSynthesis.speak(new SpeechSynthesisUtterance("系統啟動")); audioReady=true; document.getElementById('audio-tip').innerText="✅ 語音已開"; }};
 
-    const fixedMixGroup = [
-        { items: ["爆漿奶油", "熔岩巧克力"], price: 45 },
-        { items: ["爆漿奶油", "肉鬆沙拉"], price: 45 },
-        { items: ["肉鬆沙拉", "熔岩巧克力"], price: 45 },
-        { items: ["黃金起司", "玉米起司"], price: 50 },
-        { items: ["黃金起司", "鮪魚起司"], price: 50 },
-        { items: ["玉米起司", "鮪魚起司"], price: 50 },
-        { items: ["半月OREO", "蛋黃奶酥"], price: 55 }
-    ];
-
-    let cart = {}; let customItems = []; let soldOutList = []; let limited = { name: "", price: 0 };
-
-    onSnapshot(doc(db, "settings", "menuStatus"), s => { soldOutList = s.exists() ? s.data().soldOut || [] : []; render(); });
-    onSnapshot(doc(db, "settings", "limitedEdition"), s => { if(s.exists()){ limited = s.data(); render(); }});
-
-    function render() {
-        let singleHtml = "";
-        let currentSingle = [...baseMenu];
-        if (limited.name) currentSingle.push({ name: limited.name, price: limited.price, isLtd: true });
-
-        currentSingle.forEach(item => {
-            const isSold = soldOutList.includes(item.name);
-            singleHtml += `<div class="menu-item" style="${isSold?'opacity:0.5':''}">
-                <div class="item-info"><b>${item.isLtd?'⭐':''}${item.name}</b><span>$${item.price}</span></div>
-                <div class="qty-controls">${isSold ? '<span style="color:red">售完</span>' : `<button class="btn-qty" onclick="updateQty('${item.name}',-1,${item.price})">-</button><span id="q-${item.name}">${cart[item.name]||0}</span><button class="btn-qty" onclick="updateQty('${item.name}',1,${item.price})">+</button>`}</div>
-            </div>`;
-        });
-        document.getElementById('single-list').innerHTML = singleHtml;
-
-        let fixedOpt = '<option value="">-- 請選擇優惠組合 --</option>';
-        fixedMixGroup.forEach((g, idx) => {
-            const isSold = g.items.some(n => soldOutList.includes(n));
-            fixedOpt += `<option value="${idx}" ${isSold?'disabled':''}>${g.items.join('+')} ($${g.price})</option>`;
-        });
-        document.getElementById('fixed-mix-select').innerHTML = fixedOpt;
-
-        const optHtml = '<option value="">-- 請選擇 --</option>' + currentSingle.map(i => `<option value="${i.name}" ${soldOutList.includes(i.name)?'disabled':''}>${i.name} ($${i.price})</option>`).join('');
-        document.getElementById('mix-a').innerHTML = optHtml;
-        document.getElementById('mix-b').innerHTML = optHtml;
-    }
-
-    window.updateFixedMixOptions = () => {
-        const idx = document.getElementById('fixed-mix-select').value;
-        const box = document.getElementById('fixed-mix-config');
-        if(!idx) { box.style.display = 'none'; return; }
-        const group = fixedMixGroup[idx];
-        document.getElementById('fixed-p').innerText = group.price;
-        document.getElementById('fixed-3btn').innerHTML = group.items.map(n => `<option value="${n}">${n} (3顆) + ${group.items.find(i=>i!==n)} (2顆)</option>`).join('');
-        box.style.display = 'block';
-    };
-
-    window.addFixedMix = () => {
-        const idx = document.getElementById('fixed-mix-select').value;
-        const main = document.getElementById('fixed-3btn').value;
-        const group = fixedMixGroup[idx];
-        const other = group.items.find(i => i !== main);
-        customItems.push({ name: `[超值]${main}(3)+${other}(2)`, price: group.price });
-        refreshCart();
-    };
-
-    window.addCustomMix = () => {
-        const a = document.getElementById('mix-a').value, b = document.getElementById('mix-b').value;
-        if(!a || !b) return alert("請選好兩種口味！");
-        const pa = [...baseMenu, limited].find(i=>i.name===a).price, pb = [...baseMenu, limited].find(i=>i.name===b).price;
-        customItems.push({ name: `[自由]${a}(3)+${b}(2)`, price: Math.max(pa, pb) });
-        refreshCart();
-    };
-
-    window.updateQty = (name, c, p) => {
-        cart[name] = (cart[name] || 0) + c;
-        if(cart[name] <= 0) delete cart[name];
-        render(); calc();
-    };
-
-    window.removeItem = (i) => { customItems.splice(i,1); refreshCart(); };
-
-    function refreshCart() {
-        document.getElementById('custom-cart-list').innerHTML = customItems.map((m,i)=>`
-            <div style="display:flex;justify-content:space-between;background:#fff;padding:10px;border-radius:8px;margin-bottom:5px;border:1px solid #FBC02D;">
-                <span>${m.name} <b>$${m.price}</b></span>
-                <span onclick="removeItem(${i})" style="color:red;font-weight:bold;cursor:pointer;">移除</span>
-            </div>`).join('');
-        calc();
-    }
-
-    function calc() {
-        let t = 0;
-        Object.keys(cart).forEach(n => { const item = [...baseMenu, limited].find(i=>i.name===n); if(item) t += item.price*cart[n]; });
-        customItems.forEach(m => t += m.price);
-        document.getElementById('cart-total').innerText = `$${t}`;
-    }
-
-    // --- 修改後的明細顯示邏輯 ---
-    window.showPaySelect = () => {
-        const totalStr = document.getElementById('cart-total').innerText;
-        if(totalStr === "$0") return alert("購物車是空的喔！");
-
-        let detailHtml = `<h3 style="margin-bottom:10px;">確認餐點明細</h3><table class="detail-table"><tr><th>品項</th><th style="text-align:center;">數量</th><th>單價</th></tr>`;
+    // --- 關鍵修改：使用 desc 讓新訂單在上面 ---
+    onSnapshot(query(collection(db, "orders"), orderBy("timestamp", "desc")), (snap) => {
+        if (!isFirst && snap.docChanges().some(c => c.type === "added")) { window.speechSynthesis.speak(new SpeechSynthesisUtterance("新訂單")); }
+        isFirst = false;
         
-        // 1. 單一口味明細
-        Object.keys(cart).forEach(n => {
-            const item = [...baseMenu, limited].find(i => i.name === n);
-            detailHtml += `<tr><td>${n}</td><td style="text-align:center;">${cart[n]}份</td><td>$${item.price}</td></tr>`;
-        });
+        const list = document.getElementById('list');
+        let rev = 0; let totalCount = 0;
+        list.innerHTML = "";
         
-        // 2. 混搭口味明細
-        customItems.forEach(m => {
-            detailHtml += `<tr><td>${m.name}</td><td style="text-align:center;">1份</td><td>$${m.price}</td></tr>`;
+        snap.forEach(d => {
+            const o = d.data();
+            rev += parseInt(o.total.replace(/[^0-9]/g, "")) || 0;
+            totalCount++;
+
+            const isF = o.status === "finished";
+            const itemsHtml = o.items.split(', ').map(str => {
+                const parts = str.split('x');
+                return `<div class="item-row"><span>${parts[0]}</span><b>x${parts[1]||1}</b></div>`;
+            }).join('');
+
+            const div = document.createElement('div');
+            div.className = `order-card ${isF ? 'finished' : ''}`;
+            div.innerHTML = `
+                <div class="order-no-badge">#${o.orderNo}</div>
+                <div style="font-size:0.85rem; opacity:0.8;">${o.time} | ${o.payMethod}</div>
+                <div style="margin:10px 0;">${itemsHtml}</div>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <b style="font-size:1.4rem;">${o.total}</b>
+                    ${isF ? '<b style="color:#aaa;">✓ 已完成</b>' : `<button class="btn-done" onclick="markDone('${d.id}')">完成出餐</button>`}
+                </div>`;
+            list.appendChild(div);
         });
 
-        detailHtml += `</table><div style="font-size:1.2rem; font-weight:bold; color:#d32f2f; margin:15px 0;">總計金額：${totalStr}</div>`;
-        detailHtml += `<p style="color:#666; font-size:0.9rem;">請選擇付款方式完成訂單：</p>
-            <button class="pay-btn" style="background:#00B900;color:white;" onclick="submit('Line Pay','${totalStr}')">📱 LINE Pay</button>
-            <button class="pay-btn" style="background:#666;color:white;" onclick="submit('現場付款','${totalStr}')">💰 現場現金</button>
-            <button style="background:none;border:none;color:#888;margin-top:10px;text-decoration:underline;cursor:pointer;" onclick="document.getElementById('overlay').style.display='none'">再改一下 (返回)</button>`;
+        document.getElementById('total-rev').innerText = `$${rev}`;
+        document.getElementById('total-orders').innerText = totalCount;
+    });
 
-        document.getElementById('ticket-content').innerHTML = detailHtml;
-        document.getElementById('overlay').style.display = 'flex';
-    };
+    window.markDone = async (id) => { await updateDoc(doc(db, 'orders', id), { status: "finished" }); };
 
-    window.submit = async (m, t) => {
-        try {
-            const qSnap = await getDocs(collection(db, "orders"));
-            const no = qSnap.size + 1;
-            let items = [];
-            Object.keys(cart).forEach(n => items.push(`${n}x${cart[n]}`));
-            customItems.forEach(ci => items.push(`${ci.name}x1`));
-
-            await addDoc(collection(db, "orders"), { 
-                orderNo: no, items: items.join(', '), total: t, payMethod: m, 
-                time: new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}), 
-                timestamp: serverTimestamp() 
-            });
-
-            document.getElementById('ticket-content').innerHTML = `
-                <h2 style="color:#2ecc71;">✓ 訂單已送出</h2>
-                <p style="margin:0;color:#666;">您的取餐序號</p>
-                <div class="order-num">${no}</div>
-                <p>請記住號碼並向櫃檯領餐，謝謝！</p>
-                <button class="pay-btn" style="background:#d32f2f;color:white;" onclick="location.reload()">好的</button>
-            `;
-        } catch (e) {
-            alert("系統忙碌中，請重新嘗試！");
+    window.clearAllOrders = async () => {
+        if(confirm("確定要「開店歸零」嗎？\n所有訂單將被清空，下一張單會從 1 號重新開始。")) {
+            const q = await getDocs(collection(db, "orders"));
+            const batch = writeBatch(db);
+            q.forEach(d => batch.delete(d.ref));
+            await batch.commit();
         }
     };
+
+    const baseItems = ["古早原味","爆漿奶油","熔岩巧克力","肉鬆沙拉","黃金起司","玉米起司","鮪魚起司","半月OREO","蛋黃奶酥"];
+    let curLtd = "";
+    function updateStockUI(sList) {
+        let all = [...baseItems]; if(curLtd) all.push(curLtd);
+        document.getElementById('stock-ctrl').innerHTML = all.map(n => `<button class="s-btn ${sList.includes(n)?'off':'on'}" onclick="toggleSold('${n}',${sList.includes(n)})">${n}</button>`).join('');
+        window.curSold = sList;
+    }
+    onSnapshot(doc(db, "settings", "menuStatus"), s => updateStockUI(s.exists() ? s.data().soldOut || [] : []));
+    onSnapshot(doc(db, "settings", "limitedEdition"), s => { if(s.exists()){ curLtd = s.data().name; getDoc(doc(db, "settings", "menuStatus")).then(ss => updateStockUI(ss.exists() ? ss.data().soldOut || [] : [])); }});
+    window.toggleSold = async (n, isS) => { await setDoc(doc(db, "settings", "menuStatus"), { soldOut: isS ? window.curSold.filter(i=>i!==n) : [...window.curSold, n] }); };
+    window.saveLtd = async () => { await setDoc(doc(db, "settings", "limitedEdition"), { name: document.getElementById('ltd-n').value, price: Number(document.getElementById('ltd-p').value) }); alert("OK"); };
 </script>
 </body>
 </html>

@@ -7,39 +7,48 @@
     <style>
         body { font-family: sans-serif; background: #f4f4f4; margin: 0; padding: 15px; }
         .header { background: #d32f2f; color: white; padding: 12px; text-align: center; border-radius: 10px; margin-bottom: 10px; }
-        .admin-tools { display: flex; justify-content: flex-end; margin-bottom: 15px; }
-        .btn-reset { background: #666; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 0.85rem; }
-        .order-card { background: white; border-radius: 12px; padding: 12px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border-left: 8px solid #fbc02d; position: relative; }
+        .admin-tools { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .btn-reset { background: #666; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .order-card { background: white; border-radius: 12px; padding: 12px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border-left: 8px solid #fbc02d; position: relative; animation: fadeIn 0.5s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
         .order-card.completed { border-left-color: #bdc3c7; opacity: 0.5; }
         .order-badge { position: absolute; right: 12px; top: 12px; background: #333; color: #fff; padding: 4px 10px; border-radius: 15px; font-weight: 900; }
-        .order-items { font-size: 1.15rem; font-weight: bold; margin: 8px 0; padding-right: 45px; line-height: 1.5; color: #222; }
+        .order-items { font-size: 1.15rem; font-weight: bold; margin: 8px 0; color: #222; }
         .summary-section { background: #222; color: white; padding: 20px; border-radius: 15px; margin-top: 30px; }
-        .summary-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-        .stock-section { background: white; border-radius: 15px; padding: 15px; margin-top: 15px; margin-bottom: 50px; border: 1px solid #ddd; }
-        .stock-btn { padding: 10px; border: none; border-radius: 8px; font-size: 0.85rem; cursor: pointer; font-weight: bold; border: 1px solid transparent; }
+        .summary-row { display: flex; justify-content: space-between; margin-bottom: 8px; }
+        .stock-section { background: white; border-radius: 15px; padding: 15px; margin-top: 15px; border: 1px solid #ddd; margin-bottom: 50px;}
+        .stock-btn { padding: 10px; border-radius: 8px; font-size: 0.85rem; cursor: pointer; font-weight: bold; border: 1px solid transparent; }
         .stock-btn.off { background: #ffcdd2; color: #d32f2f; border-color: #d32f2f; }
         .stock-btn.on { background: #c8e6c9; color: #2e7d32; border-color: #2e7d32; }
+        
+        /* 音效提示開關樣式 */
+        .sound-toggle { background: #fff; padding: 5px 10px; border-radius: 20px; border: 2px solid #d32f2f; font-size: 0.8rem; display: flex; align-items: center; gap: 5px; cursor: pointer; }
     </style>
 </head>
-<body>
-
-<div class="header"><h1>今日訂單看板</h1></div>
+<body onclick="enableAudio()"> <div class="header"><h1>今日訂單看板</h1></div>
 
 <div class="admin-tools">
-    <button class="btn-reset" onclick="resetAllOrders()">🧹 清空今日數據 (序號歸1)</button>
+    <div id="audio-status" class="sound-toggle" onclick="toggleSound()">
+        🔊 提示音：已開啟
+    </div>
+    <button class="btn-reset" onclick="resetAllOrders()">🧹 清空數據</button>
 </div>
+
+<audio id="notification-sound" preload="auto">
+    <source src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" type="audio/mpeg">
+</audio>
 
 <div id="order-list">讀取中...</div>
 
 <hr style="border: 0; border-top: 1px solid #ccc; margin: 40px 0 20px;">
 
 <div class="summary-section">
-    <div class="summary-row"><span>今日總份數</span><span style="color:#5dade2; font-weight:900; font-size:1.2rem;"><span id="daily-qty">0</span> 份</span></div>
+    <div class="summary-row"><span>今日總份數</span><span id="daily-qty" style="color:#5dade2; font-weight:900;">0</span></div>
     <div class="summary-row"><span>今日總營收</span><span style="color:#fbc02d; font-size:1.8rem; font-weight:900;">$<span id="daily-total">0</span></span></div>
 </div>
 
 <div class="stock-section">
-    <h4 style="margin:0 0 12px 0; color:#d32f2f;">🚫 品項供應開關</h4>
+    <h4 style="margin-top:0;">🚫 品項供應管理</h4>
     <div id="stock-manager" style="display:flex; flex-wrap:wrap; gap:8px;">載入中...</div>
 </div>
 
@@ -58,26 +67,45 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-    const allNames = ["古早原味", "爆漿奶油", "熔岩巧克力", "肉鬆沙拉", "黃金起司", "玉米起司", "鮪魚起司", "半月OREO", "蛋黃奶酥", "奶油 + 巧克力", "奶油 + 肉鬆", "肉鬆 + 巧克力", "起司 + 玉米", "起司 + 鮪魚", "玉米 + 鮪魚", "OREO + 奶酥"];
+    
+    let isFirstLoad = true;
+    let soundEnabled = true;
+    const audio = document.getElementById('notification-sound');
+
+    // 啟用音效 (解決瀏覽器限制)
+    window.enableAudio = () => {
+        if (soundEnabled) {
+            audio.play().then(() => {
+                audio.pause();
+                audio.currentTime = 0;
+            }).catch(e => console.log("等待手動啟用音效"));
+        }
+    };
+
+    window.toggleSound = () => {
+        soundEnabled = !soundEnabled;
+        document.getElementById('audio-status').innerText = soundEnabled ? "🔊 提示音：已開啟" : "🔇 提示音：已關閉";
+    };
 
     onSnapshot(query(collection(db, "orders"), orderBy("timestamp", "desc")), (snapshot) => {
         const orderList = document.getElementById('order-list');
         let totalAmount = 0, totalQty = 0;
-        orderList.innerHTML = "";
         
+        // 判斷是否為新訂單 (非第一次載入，且有新資料增加時)
+        if (!isFirstLoad && snapshot.docChanges().some(change => change.type === "added")) {
+            if (soundEnabled) {
+                audio.play().catch(e => console.log("需點擊頁面啟用音效"));
+                if (navigator.vibrate) navigator.vibrate([200, 100, 200]); // 手機震動
+            }
+        }
+        isFirstLoad = false;
+
+        orderList.innerHTML = "";
         snapshot.forEach((orderDoc) => {
             const data = orderDoc.data();
             const isDone = data.status === "已完成";
-            
-            // 計算份數
-            let qty = 0;
-            const matches = (data.items || "").match(/x\s*(\d+)/g);
-            if (matches) matches.forEach(m => qty += parseInt(m.replace('x', '')));
-            
-            // 重要：修正計算邏輯，確保 total 是數字
             const orderTotal = Number(data.total) || 0;
             totalAmount += orderTotal;
-            totalQty += qty;
 
             const div = document.createElement('div');
             div.className = `order-card ${isDone ? 'completed' : ''}`;
@@ -86,20 +114,19 @@
                 <div style="font-size:0.8rem;color:#888;">${data.time}</div>
                 <div class="order-items">${data.items}</div>
                 <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <div style="color:#d32f2f; font-weight:bold;">$${orderTotal} <small>(${qty}份)</small></div>
+                    <div style="color:#d32f2f; font-weight:bold;">$${orderTotal}</div>
                     <div>
                         ${!isDone ? `<button style="background:#2ecc71; color:white; border:none; padding:8px 12px; border-radius:5px; font-weight:bold;" onclick="updateStatus('${orderDoc.id}', '已完成')">完成</button>` : ''}
-                        <button style="background:#eee; border:none; padding:8px 12px; border-radius:5px; color:#888;" onclick="cancelOrder('${orderDoc.id}')">取消/刪除</button>
+                        <button style="background:#eee; border:none; padding:8px 12px; border-radius:5px; color:#888;" onclick="cancelOrder('${orderDoc.id}')">刪除</button>
                     </div>
                 </div>`;
             orderList.appendChild(div);
         });
-        
         document.getElementById('daily-total').innerText = totalAmount;
-        document.getElementById('daily-qty').innerText = totalQty;
     });
 
-    // 品項開關邏輯保持不變...
+    // 品項管理與其他邏輯 (保持不變...)
+    const allNames = ["古早原味", "爆漿奶油", "熔岩巧克力", "肉鬆沙拉", "黃金起司", "玉米起司", "鮪魚起司", "半月OREO", "蛋黃奶酥", "奶油 + 巧克力", "奶油 + 肉鬆", "肉鬆 + 巧克力", "起司 + 玉米", "起司 + 鮪魚", "玉米 + 鮪魚", "OREO + 奶酥"];
     onSnapshot(doc(db, "settings", "menuStatus"), (docSnap) => {
         const soldOut = docSnap.exists() ? docSnap.data().soldOut || [] : [];
         document.getElementById('stock-manager').innerHTML = allNames.map(name => {
@@ -107,21 +134,16 @@
             return `<button class="stock-btn ${isOff ? 'off' : 'on'}" onclick="toggleStock('${name}', ${isOff})">${name}</button>`;
         }).join('');
     });
-
-    window.toggleStock = async (name, isCurrentlyOff) => {
+    window.toggleStock = async (name, isOff) => {
         const docRef = doc(db, "settings", "menuStatus");
-        let currentSoldOut = [];
-        document.querySelectorAll('.stock-btn').forEach(btn => {
-            if(btn.classList.contains('off')) currentSoldOut.push(btn.innerText);
-        });
-        if(!isCurrentlyOff) currentSoldOut.push(name);
-        else currentSoldOut = currentSoldOut.filter(i => i !== name);
-        await setDoc(docRef, { soldOut: currentSoldOut });
+        let current = [];
+        document.querySelectorAll('.stock-btn.off').forEach(b => current.push(b.innerText));
+        if(!isOff) current.push(name); else current = current.filter(n => n !== name);
+        await setDoc(docRef, { soldOut: current });
     };
-
-    window.resetAllOrders = async () => { if(confirm("確定清空今天所有訂單？")) { const q = await getDocs(collection(db, "orders")); const b = writeBatch(db); q.forEach(d => b.delete(d.ref)); await b.commit(); } };
     window.updateStatus = async (id, s) => await updateDoc(doc(db, "orders", id), { status: s });
-    window.cancelOrder = async (id) => { if(confirm("確定刪除這筆訂單？")) await deleteDoc(doc(db, "orders", id)); };
+    window.cancelOrder = async (id) => { if(confirm("確定刪除？")) await deleteDoc(doc(db, "orders", id)); };
+    window.resetAllOrders = async () => { if(confirm("確定清空今天所有數據？")) { const q = await getDocs(collection(db, "orders")); const b = writeBatch(db); q.forEach(d => b.delete(d.ref)); await b.commit(); } };
 </script>
 </body>
 </html>

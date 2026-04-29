@@ -39,17 +39,17 @@
     <p>目前非營業時間，暫時無法點餐。</p>
 </div>
 
-<div class="header"><h1>小紅帽雞蛋糕</h1><p>純鮮奶製作 · 每份 5 顆</p></div>
+<div class="header"><h1>小紅帽雞蛋糕</h1><p> 每份 5 顆</p></div>
 
 <div class="category-title">單一口味 (5顆)</div>
 <div id="single-list"></div>
 
-<div class="category-title">自由混搭 (3+2顆) <span>$55</span></div>
+<div class="category-title">自由混搭 (3+2顆)</div>
 <div class="mix-box">
     <label>誰要 3 顆？</label><select id="free-3btn" onchange="updateFreeMixPreview()"></select>
     <label>誰要 2 顆？</label><select id="free-2btn" onchange="updateFreeMixPreview()"></select>
     <div id="free-mix-preview" style="display:none;"></div>
-    <button onclick="addFreeMix()" style="width:100%; padding:10px; background:#FBC02D; border:none; border-radius:8px; font-weight:bold;">確認混搭 $55</button>
+    <button onclick="addFreeMix()" style="width:100%; padding:10px; background:#FBC02D; border:none; border-radius:8px; font-weight:bold;">確認混搭加入購物車</button>
 </div>
 
 <div class="category-title">超值快選組合 (3+2顆)</div>
@@ -98,12 +98,12 @@
     ];
 
     let cart = {}; let customItems = []; let soldOutList = []; let limited = { name: "", price: 0 };
+    window.currentFreeMixPrice = 0;
 
     onSnapshot(doc(db, "settings", "menuStatus"), s => { soldOutList = s.exists() ? s.data().soldOut || [] : []; render(); });
     onSnapshot(doc(db, "settings", "limitedEdition"), s => { if(s.exists()){ limited = s.data(); render(); }});
 
     function render() {
-        // 單一口味列表渲染
         let singleHtml = "";
         let currentSingle = [...baseMenu];
         if (limited.name) currentSingle.push({ name: limited.name, price: limited.price, isLtd: true });
@@ -117,19 +117,13 @@
         });
         document.getElementById('single-list').innerHTML = singleHtml;
 
-        // 自由混搭下拉選單渲染 (加入限定口味)
+        // 混搭選單加入限定口味
         let mixOptions = [...baseMenu];
         if (limited.name) mixOptions.push({ name: `⭐${limited.name}`, realName: limited.name });
-        
-        const optionsHtml = '<option value="">請選擇</option>' + mixOptions.map(i => {
-            const realName = i.realName || i.name;
-            return `<option value="${realName}" ${soldOutList.includes(realName)?'disabled':''}>${i.name}</option>`;
-        }).join('');
-        
+        const optionsHtml = '<option value="">請選擇</option>' + mixOptions.map(i => `<option value="${i.realName || i.name}" ${soldOutList.includes(i.realName || i.name)?'disabled':''}>${i.name}</option>`).join('');
         document.getElementById('free-3btn').innerHTML = optionsHtml;
         document.getElementById('free-2btn').innerHTML = optionsHtml;
 
-        // 超值快選組合 (超值組通常不包含限定口味，以維持定價)
         let fixedOpt = '<option value="">-- 超值快選組合 --</option>';
         fixedMixGroup.forEach((g, idx) => {
             const isSold = g.items.some(n => soldOutList.includes(n));
@@ -142,15 +136,24 @@
         const m3 = document.getElementById('free-3btn').value;
         const m2 = document.getElementById('free-2btn').value;
         const pre = document.getElementById('free-mix-preview');
-        if(m3 && m2) { pre.innerHTML = `已選：<b>${m3}(3顆)</b> + <b>${m2}(2顆)</b>`; pre.style.display = 'block'; }
-        else { pre.style.display = 'none'; }
+        if(m3 && m2) {
+            const all = [...baseMenu]; if(limited.name) all.push(limited);
+            const p3 = all.find(i=>i.name===m3)?.price || 0;
+            const p2 = all.find(i=>i.name===m2)?.price || 0;
+            const max = Math.max(p3, p2);
+            window.currentFreeMixPrice = max;
+            pre.innerHTML = `已選：<b>${m3}(3)+${m2}(2)</b><br>混搭價格：<b style="color:#d32f2f;">$${max}</b>`;
+            pre.style.display = 'block';
+        } else { pre.style.display = 'none'; }
     };
 
     window.addFreeMix = () => {
         const m3 = document.getElementById('free-3btn').value;
         const m2 = document.getElementById('free-2btn').value;
         if(!m3 || !m2) return alert("請選好兩種口味！");
-        customItems.push({ name: `[自選]${m3}(3)+${m2}(2)`, price: 55 }); refreshCart();
+        customItems.push({ name: `[自選]${m3}(3)+${m2}(2)`, price: window.currentFreeMixPrice });
+        document.getElementById('free-3btn').value = ""; document.getElementById('free-2btn').value = "";
+        document.getElementById('free-mix-preview').style.display = 'none'; refreshCart();
     };
 
     window.updateFixedMixOptions = () => {
@@ -181,31 +184,24 @@
 
     window.updateQty = (n, c, p) => { cart[n] = (cart[n] || 0) + c; if(cart[n] <= 0) delete cart[n]; calc(); render(); };
     window.removeItem = (i) => { customItems.splice(i,1); refreshCart(); };
-
     function refreshCart() {
         document.getElementById('custom-cart-list').innerHTML = customItems.map((m,i)=>`<div style="display:flex;justify-content:space-between;background:#fff;padding:10px;border-radius:8px;margin-bottom:5px;border:1px solid #FBC02D;"><span>${m.name} <b>$${m.price}</b></span><span onclick="removeItem(${i})" style="color:red;font-weight:bold;">移除</span></div>`).join('');
         calc();
     }
-
     function calc() {
-        let t = 0; 
-        const allItems = [...baseMenu]; if(limited.name) allItems.push(limited);
-        Object.keys(cart).forEach(n => { 
-            const item = allItems.find(i=>i.name===n); 
-            if(item) t += item.price*cart[n]; 
-        });
-        customItems.forEach(m => t += m.price); 
-        document.getElementById('cart-total').innerText = `$${t}`;
+        let t = 0; const all = [...baseMenu]; if(limited.name) all.push(limited);
+        Object.keys(cart).forEach(n => { const item = all.find(i=>i.name===n); if(item) t += item.price*cart[n]; });
+        customItems.forEach(m => t += m.price); document.getElementById('cart-total').innerText = `$${t}`;
     }
 
     window.showPaySelect = () => {
         const totalStr = document.getElementById('cart-total').innerText;
         if(totalStr === "$0") return alert("購物車是空的喔！");
         let detailHtml = `<h3>最後確認餐點</h3><div style="text-align:left; background:#f9f9f9; padding:10px; border-radius:10px; margin-bottom:10px;"><table class="detail-table"><tr><th>品項</th><th style="text-align:center;">數量</th><th>金額</th></tr>`;
-        const allItems = [...baseMenu]; if(limited.name) allItems.push(limited);
-        Object.keys(cart).forEach(n => { const item = allItems.find(i => i.name === n); detailHtml += `<tr><td>${n}</td><td style="text-align:center;">${cart[n]}</td><td>$${item.price * cart[n]}</td></tr>`; });
+        const all = [...baseMenu]; if(limited.name) all.push(limited);
+        Object.keys(cart).forEach(n => { const item = all.find(i => i.name === n); detailHtml += `<tr><td>${n}</td><td style="text-align:center;">${cart[n]}</td><td>$${item.price * cart[n]}</td></tr>`; });
         customItems.forEach(m => { detailHtml += `<tr><td>${m.name}</td><td style="text-align:center;">1</td><td>$${m.price}</td></tr>`; });
-        detailHtml += `</table></div><input type="text" id="order-note" class="note-input" placeholder="備註 (例如：要脆一點)...">
+        detailHtml += `</table></div><input type="text" id="order-note" class="note-input" placeholder="備註...">
             <div style="font-size:1.4rem; font-weight:bold; color:#d32f2f; margin-bottom:15px;">總計金額：${totalStr}</div>
             <button class="pay-btn" style="background:#d32f2f; color:white;" onclick="submitOrder('${totalStr}')">✅ 確認無誤，送出訂單</button>
             <button style="background:none; border:none; color:#888; text-decoration:underline;" onclick="document.getElementById('overlay').style.display='none'">返回修改</button>`;
@@ -223,15 +219,13 @@
             Object.keys(cart).forEach(n => itemsArr.push(`${n}x${cart[n]}`));
             customItems.forEach(ci => itemsArr.push(`${ci.name}x1`));
             const docRef = await addDoc(collection(db, "orders"), { orderNo: no, items: itemsArr.join(', '), note: note, total: t, time: new Date().toLocaleTimeString('zh-TW', {hour12:false, hour:'2-digit', minute:'2-digit'}), timestamp: serverTimestamp(), status: "pending" });
-            
             ticket.innerHTML = `<div class="waiting-box"><p>您的取餐序號</p><div class="order-num">${no}</div><div class="status-badge pulse">⏳ 等待老闆接單中...</div></div>`;
-            
             onSnapshot(doc(db, "orders", docRef.id), (snap) => {
                 if (!snap.exists()) {
-                    ticket.innerHTML = `<div class="waiting-box"><h2 style="color:#d32f2f;">❌ 訂單已取消</h2><p>抱歉，老闆取消了您的訂單。</p><button class="pay-btn" style="background:#d32f2f; color:white;" onclick="location.reload()">重新點餐</button></div>`;
+                    ticket.innerHTML = `<div class="waiting-box"><h2 style="color:#d32f2f;">❌ 訂單已取消</h2><p>老闆取消了您的訂單。</p><button class="pay-btn" style="background:#d32f2f; color:white;" onclick="location.reload()">重新點餐</button></div>`;
                     window.speechSynthesis.speak(new SpeechSynthesisUtterance("訂單已被取消"));
                 } else if (snap.data().status === "confirmed") {
-                    ticket.innerHTML = `<div class="waiting-box"><h2 style="color:#2ecc71;">✅ 老闆已接單！</h2><p>您的序號是</p><div class="order-num" style="border-color:#2ecc71; color:#2ecc71;">${no}</div><p>請於現場等候叫號，謝謝！</p><button class="pay-btn" style="background:#2ecc71; color:white;" onclick="location.reload()">好的</button></div>`;
+                    ticket.innerHTML = `<div class="waiting-box"><h2 style="color:#2ecc71;">✅ 老闆已接單！</h2><p>您的序號是</p><div class="order-num" style="border-color:#2ecc71; color:#2ecc71;">${no}</div><p>請於現場等候，謝謝！</p><button class="pay-btn" style="background:#2ecc71; color:white;" onclick="location.reload()">好的</button></div>`;
                     window.speechSynthesis.speak(new SpeechSynthesisUtterance("老闆已接單"));
                 }
             });

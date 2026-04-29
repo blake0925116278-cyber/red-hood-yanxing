@@ -39,7 +39,7 @@
     <p>目前非營業時間，暫時無法點餐。</p>
 </div>
 
-<div class="header"><h1>小紅帽雞蛋糕</h1><p>每份 5 顆</p></div>
+<div class="header"><h1>小紅帽雞蛋糕</h1><p>純鮮奶製作 · 每份 5 顆</p></div>
 
 <div class="category-title">單一口味 (5顆)</div>
 <div id="single-list"></div>
@@ -103,6 +103,7 @@
     onSnapshot(doc(db, "settings", "limitedEdition"), s => { if(s.exists()){ limited = s.data(); render(); }});
 
     function render() {
+        // 單一口味列表渲染
         let singleHtml = "";
         let currentSingle = [...baseMenu];
         if (limited.name) currentSingle.push({ name: limited.name, price: limited.price, isLtd: true });
@@ -116,10 +117,19 @@
         });
         document.getElementById('single-list').innerHTML = singleHtml;
 
-        const options = '<option value="">請選擇</option>' + baseMenu.map(i => `<option value="${i.name}" ${soldOutList.includes(i.name)?'disabled':''}>${i.name}</option>`).join('');
-        document.getElementById('free-3btn').innerHTML = options;
-        document.getElementById('free-2btn').innerHTML = options;
+        // 自由混搭下拉選單渲染 (加入限定口味)
+        let mixOptions = [...baseMenu];
+        if (limited.name) mixOptions.push({ name: `⭐${limited.name}`, realName: limited.name });
+        
+        const optionsHtml = '<option value="">請選擇</option>' + mixOptions.map(i => {
+            const realName = i.realName || i.name;
+            return `<option value="${realName}" ${soldOutList.includes(realName)?'disabled':''}>${i.name}</option>`;
+        }).join('');
+        
+        document.getElementById('free-3btn').innerHTML = optionsHtml;
+        document.getElementById('free-2btn').innerHTML = optionsHtml;
 
+        // 超值快選組合 (超值組通常不包含限定口味，以維持定價)
         let fixedOpt = '<option value="">-- 超值快選組合 --</option>';
         fixedMixGroup.forEach((g, idx) => {
             const isSold = g.items.some(n => soldOutList.includes(n));
@@ -135,12 +145,14 @@
         if(m3 && m2) { pre.innerHTML = `已選：<b>${m3}(3顆)</b> + <b>${m2}(2顆)</b>`; pre.style.display = 'block'; }
         else { pre.style.display = 'none'; }
     };
+
     window.addFreeMix = () => {
         const m3 = document.getElementById('free-3btn').value;
         const m2 = document.getElementById('free-2btn').value;
         if(!m3 || !m2) return alert("請選好兩種口味！");
         customItems.push({ name: `[自選]${m3}(3)+${m2}(2)`, price: 55 }); refreshCart();
     };
+
     window.updateFixedMixOptions = () => {
         const idx = document.getElementById('fixed-mix-select').value;
         const box = document.getElementById('fixed-mix-config');
@@ -150,6 +162,7 @@
         document.getElementById('fixed-3btn').innerHTML = group.items.map(n => `<option value="${n}">${n} (3顆)</option>`).join('');
         box.style.display = 'block'; showMixPreview();
     };
+
     window.showMixPreview = () => {
         const main = document.getElementById('fixed-3btn').value;
         const idx = document.getElementById('fixed-mix-select').value;
@@ -157,6 +170,7 @@
         const pre = document.getElementById('mix-preview-text');
         pre.innerHTML = `已選：<b>${main}(3顆)</b> + <b>${other}(2顆)</b>`; pre.style.display = 'block';
     };
+
     window.addFixedMix = () => {
         const idx = document.getElementById('fixed-mix-select').value;
         const main = document.getElementById('fixed-3btn').value;
@@ -167,22 +181,31 @@
 
     window.updateQty = (n, c, p) => { cart[n] = (cart[n] || 0) + c; if(cart[n] <= 0) delete cart[n]; calc(); render(); };
     window.removeItem = (i) => { customItems.splice(i,1); refreshCart(); };
+
     function refreshCart() {
         document.getElementById('custom-cart-list').innerHTML = customItems.map((m,i)=>`<div style="display:flex;justify-content:space-between;background:#fff;padding:10px;border-radius:8px;margin-bottom:5px;border:1px solid #FBC02D;"><span>${m.name} <b>$${m.price}</b></span><span onclick="removeItem(${i})" style="color:red;font-weight:bold;">移除</span></div>`).join('');
         calc();
     }
+
     function calc() {
-        let t = 0; Object.keys(cart).forEach(n => { const item = [...baseMenu, limited].find(i=>i.name===n); if(item) t += item.price*cart[n]; });
-        customItems.forEach(m => t += m.price); document.getElementById('cart-total').innerText = `$${t}`;
+        let t = 0; 
+        const allItems = [...baseMenu]; if(limited.name) allItems.push(limited);
+        Object.keys(cart).forEach(n => { 
+            const item = allItems.find(i=>i.name===n); 
+            if(item) t += item.price*cart[n]; 
+        });
+        customItems.forEach(m => t += m.price); 
+        document.getElementById('cart-total').innerText = `$${t}`;
     }
 
     window.showPaySelect = () => {
         const totalStr = document.getElementById('cart-total').innerText;
         if(totalStr === "$0") return alert("購物車是空的喔！");
         let detailHtml = `<h3>最後確認餐點</h3><div style="text-align:left; background:#f9f9f9; padding:10px; border-radius:10px; margin-bottom:10px;"><table class="detail-table"><tr><th>品項</th><th style="text-align:center;">數量</th><th>金額</th></tr>`;
-        Object.keys(cart).forEach(n => { const item = [...baseMenu, limited].find(i => i.name === n); detailHtml += `<tr><td>${n}</td><td style="text-align:center;">${cart[n]}</td><td>$${item.price * cart[n]}</td></tr>`; });
+        const allItems = [...baseMenu]; if(limited.name) allItems.push(limited);
+        Object.keys(cart).forEach(n => { const item = allItems.find(i => i.name === n); detailHtml += `<tr><td>${n}</td><td style="text-align:center;">${cart[n]}</td><td>$${item.price * cart[n]}</td></tr>`; });
         customItems.forEach(m => { detailHtml += `<tr><td>${m.name}</td><td style="text-align:center;">1</td><td>$${m.price}</td></tr>`; });
-        detailHtml += `</table></div><input type="text" id="order-note" class="note-input" placeholder="備註...">
+        detailHtml += `</table></div><input type="text" id="order-note" class="note-input" placeholder="備註 (例如：要脆一點)...">
             <div style="font-size:1.4rem; font-weight:bold; color:#d32f2f; margin-bottom:15px;">總計金額：${totalStr}</div>
             <button class="pay-btn" style="background:#d32f2f; color:white;" onclick="submitOrder('${totalStr}')">✅ 確認無誤，送出訂單</button>
             <button style="background:none; border:none; color:#888; text-decoration:underline;" onclick="document.getElementById('overlay').style.display='none'">返回修改</button>`;

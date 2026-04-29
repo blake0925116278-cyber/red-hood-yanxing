@@ -16,25 +16,21 @@
         .order-items { font-size: 1.15rem; font-weight: bold; margin: 8px 0; color: #222; }
         .summary-section { background: #222; color: white; padding: 20px; border-radius: 15px; margin-top: 30px; }
         .summary-row { display: flex; justify-content: space-between; margin-bottom: 8px; }
+        .sound-status { background: #ffeb3b; padding: 8px 15px; border-radius: 25px; font-size: 0.9rem; font-weight: bold; border: 2px solid #fbc02d; cursor: pointer; text-align: center; width: 60%; }
         .stock-section { background: white; border-radius: 15px; padding: 15px; margin-top: 15px; border: 1px solid #ddd; margin-bottom: 50px;}
-        .sound-status { background: #ffeb3b; padding: 6px 15px; border-radius: 20px; font-size: 0.85rem; font-weight: bold; border: 2px solid #fbc02d; cursor: pointer; }
         .stock-btn { padding: 10px; border-radius: 8px; font-size: 0.85rem; cursor: pointer; font-weight: bold; border: 1px solid transparent; }
         .stock-btn.off { background: #ffcdd2; color: #d32f2f; border-color: #d32f2f; }
         .stock-btn.on { background: #c8e6c9; color: #2e7d32; border-color: #2e7d32; }
     </style>
 </head>
-<body onclick="enableSound()">
+<body onclick="unlockAudio()">
 
 <div class="header"><h1>今日訂單看板</h1></div>
 
 <div class="admin-tools">
-    <div id="sound-info" class="sound-status">點我啟用「有訂單喔」語音</div>
-    <button class="btn-reset" onclick="resetAllOrders()">🧹 清空數據</button>
+    <div id="sound-info" class="sound-status">📣 點我開啟「有訂單喔」語音</div>
+    <button class="btn-reset" onclick="resetAllOrders()">清空數據</button>
 </div>
-
-<audio id="order-voice" preload="auto">
-    <source src="https://translate.google.com/translate_tts?ie=UTF-8&q=%E6%9C%89%E6%96%B0%E8%A8%82%E5%96%AE%E5%93%A6&tl=zh-TW&total=1&idx=0&textlen=6&client=tw-ob" type="audio/mpeg">
-</audio>
 
 <div id="order-list">連線中...</div>
 
@@ -66,27 +62,38 @@
     
     let isFirstLoad = true;
     let audioUnlocked = false;
-    const voice = document.getElementById('order-voice');
 
-    window.enableSound = () => {
+    // 解鎖語音功能
+    window.unlockAudio = () => {
         if (!audioUnlocked) {
-            voice.play().then(() => {
-                voice.pause();
-                voice.currentTime = 0;
-                audioUnlocked = true;
-                document.getElementById('sound-info').innerText = "✅ 語音提醒已就緒";
-                document.getElementById('sound-info').style.background = "#c8e6c9";
-                document.getElementById('sound-info').style.borderColor = "#2e7d32";
-            }).catch(e => console.log("等待點擊..."));
+            // 播放一個安靜的測試語音來解鎖系統
+            const utter = new SpeechSynthesisUtterance("語音已就緒");
+            utter.lang = 'zh-TW';
+            utter.volume = 0; // 靜音測試
+            window.speechSynthesis.speak(utter);
+            
+            audioUnlocked = true;
+            const info = document.getElementById('sound-info');
+            info.innerText = "✅ 語音提醒已啟動";
+            info.style.background = "#c8e6c9";
+            info.style.borderColor = "#2e7d32";
         }
+    };
+
+    // 播放語音函數
+    const speakOrder = () => {
+        if (!audioUnlocked) return;
+        const msg = new SpeechSynthesisUtterance("有訂單喔");
+        msg.lang = 'zh-TW';
+        msg.rate = 1.0;
+        msg.pitch = 1.0;
+        window.speechSynthesis.speak(msg);
+        if (navigator.vibrate) navigator.vibrate([300, 100, 300]);
     };
 
     onSnapshot(query(collection(db, "orders"), orderBy("timestamp", "desc")), (snapshot) => {
         if (!isFirstLoad && snapshot.docChanges().some(change => change.type === "added")) {
-            if (audioUnlocked) {
-                voice.play().catch(e => console.log("播音失敗", e));
-                if (navigator.vibrate) navigator.vibrate([500, 200, 500]);
-            }
+            speakOrder();
         }
         isFirstLoad = false;
 
@@ -118,7 +125,7 @@
         document.getElementById('daily-total').innerText = totalAmount;
     });
 
-    // 品項管理部分 (略...)
+    // 品項供應管理部分
     const allNames = ["古早原味", "爆漿奶油", "熔岩巧克力", "肉鬆沙拉", "黃金起司", "玉米起司", "鮪魚起司", "半月OREO", "蛋黃奶酥", "奶油 + 巧克力", "奶油 + 肉鬆", "肉鬆 + 巧克力", "起司 + 玉米", "起司 + 鮪魚", "玉米 + 鮪魚", "OREO + 奶酥"];
     onSnapshot(doc(db, "settings", "menuStatus"), (docSnap) => {
         const soldOut = docSnap.exists() ? docSnap.data().soldOut || [] : [];

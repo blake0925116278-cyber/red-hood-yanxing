@@ -46,20 +46,16 @@
 
 <div class="category-title">自由混搭 (3+2顆) <span>$55</span></div>
 <div class="mix-box">
-    <label>誰要 3 顆？</label>
-    <select id="free-3btn" onchange="updateFreeMixPreview()"></select>
-    <label>誰要 2 顆？</label>
-    <select id="free-2btn" onchange="updateFreeMixPreview()"></select>
+    <label>誰要 3 顆？</label><select id="free-3btn" onchange="updateFreeMixPreview()"></select>
+    <label>誰要 2 顆？</label><select id="free-2btn" onchange="updateFreeMixPreview()"></select>
     <div id="free-mix-preview" style="display:none;"></div>
     <button onclick="addFreeMix()" style="width:100%; padding:10px; background:#FBC02D; border:none; border-radius:8px; font-weight:bold;">確認混搭 $55</button>
 </div>
 
 <div class="category-title">超值快選組合 (3+2顆)</div>
 <div class="mix-box">
-    <label>選擇組合：</label>
     <select id="fixed-mix-select" onchange="updateFixedMixOptions()"></select>
     <div id="fixed-mix-config" style="display:none;">
-        <label style="color:#d32f2f; font-weight:bold;">誰要 3 顆？</label>
         <select id="fixed-3btn" onchange="showMixPreview()"></select>
         <div id="mix-preview-text" style="display:none;"></div>
         <button onclick="addFixedMix()" style="width:100%; padding:10px; background:#d32f2f; color:white; border:none; border-radius:8px; font-weight:bold;">確認加入 $ <span id="fixed-p">0</span></button>
@@ -120,13 +116,11 @@
         });
         document.getElementById('single-list').innerHTML = singleHtml;
 
-        // 填充自由混搭下拉選單
         const options = '<option value="">請選擇</option>' + baseMenu.map(i => `<option value="${i.name}" ${soldOutList.includes(i.name)?'disabled':''}>${i.name}</option>`).join('');
         document.getElementById('free-3btn').innerHTML = options;
         document.getElementById('free-2btn').innerHTML = options;
 
-        // 填充超值快選
-        let fixedOpt = '<option value="">-- 請選擇組合 --</option>';
+        let fixedOpt = '<option value="">-- 超值快選組合 --</option>';
         fixedMixGroup.forEach((g, idx) => {
             const isSold = g.items.some(n => soldOutList.includes(n));
             fixedOpt += `<option value="${idx}" ${isSold?'disabled':''}>${g.items.join('+')} ($${g.price})</option>`;
@@ -134,7 +128,6 @@
         document.getElementById('fixed-mix-select').innerHTML = fixedOpt;
     }
 
-    // 自由混搭邏輯
     window.updateFreeMixPreview = () => {
         const m3 = document.getElementById('free-3btn').value;
         const m2 = document.getElementById('free-2btn').value;
@@ -146,11 +139,8 @@
         const m3 = document.getElementById('free-3btn').value;
         const m2 = document.getElementById('free-2btn').value;
         if(!m3 || !m2) return alert("請選好兩種口味！");
-        customItems.push({ name: `[自選]${m3}(3)+${m2}(2)`, price: 55 });
-        refreshCart();
+        customItems.push({ name: `[自選]${m3}(3)+${m2}(2)`, price: 55 }); refreshCart();
     };
-
-    // 超值快選邏輯 (與之前相同)
     window.updateFixedMixOptions = () => {
         const idx = document.getElementById('fixed-mix-select').value;
         const box = document.getElementById('fixed-mix-config');
@@ -158,8 +148,7 @@
         const group = fixedMixGroup[idx];
         document.getElementById('fixed-p').innerText = group.price;
         document.getElementById('fixed-3btn').innerHTML = group.items.map(n => `<option value="${n}">${n} (3顆)</option>`).join('');
-        box.style.display = 'block';
-        showMixPreview();
+        box.style.display = 'block'; showMixPreview();
     };
     window.showMixPreview = () => {
         const main = document.getElementById('fixed-3btn').value;
@@ -173,8 +162,7 @@
         const main = document.getElementById('fixed-3btn').value;
         const group = fixedMixGroup[idx];
         const other = group.items.find(i => i !== main);
-        customItems.push({ name: `[混搭]${main}(3)+${other}(2)`, price: group.price });
-        refreshCart();
+        customItems.push({ name: `[混搭]${main}(3)+${other}(2)`, price: group.price }); refreshCart();
     };
 
     window.updateQty = (n, c, p) => { cart[n] = (cart[n] || 0) + c; if(cart[n] <= 0) delete cart[n]; calc(); render(); };
@@ -208,13 +196,18 @@
         try {
             const qSnap = await getDocs(collection(db, "orders"));
             const no = qSnap.size + 1;
-            let items = [];
-            Object.keys(cart).forEach(n => items.push(`${n}x${cart[n]}`));
-            customItems.forEach(ci => items.push(`${ci.name}x1`));
-            const docRef = await addDoc(collection(db, "orders"), { orderNo: no, items: items.join(', '), note: note, total: t, time: new Date().toLocaleTimeString('zh-TW', {hour12:false, hour:'2-digit', minute:'2-digit'}), timestamp: serverTimestamp(), status: "pending" });
+            let itemsArr = [];
+            Object.keys(cart).forEach(n => itemsArr.push(`${n}x${cart[n]}`));
+            customItems.forEach(ci => itemsArr.push(`${ci.name}x1`));
+            const docRef = await addDoc(collection(db, "orders"), { orderNo: no, items: itemsArr.join(', '), note: note, total: t, time: new Date().toLocaleTimeString('zh-TW', {hour12:false, hour:'2-digit', minute:'2-digit'}), timestamp: serverTimestamp(), status: "pending" });
+            
             ticket.innerHTML = `<div class="waiting-box"><p>您的取餐序號</p><div class="order-num">${no}</div><div class="status-badge pulse">⏳ 等待老闆接單中...</div></div>`;
-            onSnapshot(doc(db, "orders", docRef.id), (doc) => {
-                if (doc.data()?.status === "confirmed") {
+            
+            onSnapshot(doc(db, "orders", docRef.id), (snap) => {
+                if (!snap.exists()) {
+                    ticket.innerHTML = `<div class="waiting-box"><h2 style="color:#d32f2f;">❌ 訂單已取消</h2><p>抱歉，老闆取消了您的訂單。</p><button class="pay-btn" style="background:#d32f2f; color:white;" onclick="location.reload()">重新點餐</button></div>`;
+                    window.speechSynthesis.speak(new SpeechSynthesisUtterance("訂單已被取消"));
+                } else if (snap.data().status === "confirmed") {
                     ticket.innerHTML = `<div class="waiting-box"><h2 style="color:#2ecc71;">✅ 老闆已接單！</h2><p>您的序號是</p><div class="order-num" style="border-color:#2ecc71; color:#2ecc71;">${no}</div><p>請於現場等候叫號，謝謝！</p><button class="pay-btn" style="background:#2ecc71; color:white;" onclick="location.reload()">好的</button></div>`;
                     window.speechSynthesis.speak(new SpeechSynthesisUtterance("老闆已接單"));
                 }

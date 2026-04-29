@@ -3,50 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>小紅帽管理後台</title>
+    <title>小紅帽管理後台 - 簡潔出餐版</title>
     <style>
-        body { font-family: sans-serif; background: #f4f4f4; padding: 10px; margin: 0; }
-        .header { background: #d32f2f; color: #fff; padding: 10px; text-align: center; border-radius: 0 0 15px 15px; margin-bottom: 10px; }
-        .order-card { background: #fff; padding: 15px; margin-top: 10px; border-radius: 12px; position: relative; border-left: 10px solid #ddd; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        body { font-family: -apple-system, sans-serif; background: #e9ecef; padding: 10px; margin: 0; }
+        .header { background: #d32f2f; color: #fff; padding: 15px; text-align: center; border-radius: 0 0 20px 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+        
+        /* 訂單卡片：加強陰影與間距 */
+        .order-card { background: #fff; padding: 20px; margin-top: 20px; border-radius: 15px; position: relative; border-left: 15px solid #ddd; box-shadow: 0 4px 15px rgba(0,0,0,0.15); }
         .order-card.line { border-left-color: #00B900; }
-        .order-card.cash { border-left-color: #666; }
-        .order-no-badge { position: absolute; right: 15px; top: 15px; background: #333; color: #fff; padding: 5px 12px; border-radius: 8px; font-size: 1.5rem; font-weight: bold; }
-        .item-text { font-size: 1.3rem; font-weight: bold; margin: 12px 0; color: #d32f2f; line-height: 1.5; padding-right: 70px; }
-        .tag { display: inline-block; padding: 3px 10px; border-radius: 5px; font-size: 0.8rem; font-weight: bold; color: white; margin-bottom: 5px; }
-        .stock-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 8px; margin-top: 10px; }
-        .s-btn { padding: 10px 4px; font-size: 0.8rem; border: 1px solid #ccc; border-radius: 8px; cursor: pointer; text-align: center; font-weight: bold; }
-        .s-btn.off { background: #ffcdd2; color: #d32f2f; border-color: #ef9a9a; }
-        .s-btn.on { background: #c8e6c9; color: #2e7d32; border-color: #a5d6a7; }
-        .stat-box { background: #222; color: #fff; padding: 15px; border-radius: 12px; margin: 10px 5px; display: flex; justify-content: space-between; align-items: center; }
-        .admin-section { background: #fff; padding: 15px; border-radius: 12px; margin: 10px 5px; border: 1px solid #ddd; }
-        .btn-clear { background: #555; color: white; border: none; padding: 8px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .order-card.cash { border-left-color: #555; }
+        
+        /* 序號：放在右上角，字體極大 */
+        .order-no-badge { position: absolute; right: 15px; top: 15px; background: #000; color: #fff; padding: 10px 18px; border-radius: 12px; font-size: 2.2rem; font-weight: 900; }
+        
+        /* 核心優化：一行一個品項 */
+        .item-list { margin: 20px 0; padding: 0; list-style: none; }
+        .item-row { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            padding: 12px 0; 
+            border-bottom: 2px solid #f0f0f0; 
+        }
+        .item-row:last-child { border-bottom: none; }
+        
+        /* 品項文字大字化 */
+        .item-name { font-size: 1.6rem; font-weight: 800; color: #333; flex: 1; }
+        .item-qty { font-size: 2rem; font-weight: 900; color: #d32f2f; margin-left: 15px; background: #fff1f1; padding: 0 10px; border-radius: 8px; }
+        
+        /* 混搭細節小字化，不干擾視線 */
+        .mix-info { font-size: 1.1rem; color: #e65100; display: block; margin-top: 5px; font-weight: bold; }
+
+        .tag { display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: 0.9rem; font-weight: bold; color: white; margin-bottom: 5px; }
+        .stat-box { background: #333; color: #fff; padding: 20px; border-radius: 15px; margin: 20px 5px; display: flex; justify-content: space-between; align-items: center; }
+        .admin-section { background: #fff; padding: 15px; border-radius: 15px; margin: 15px 5px; border: 1px solid #ddd; }
+        .stock-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; }
+        .s-btn { padding: 12px 5px; font-size: 0.9rem; border: 1px solid #ccc; border-radius: 10px; cursor: pointer; text-align: center; font-weight: bold; }
+        .s-btn.off { background: #ffebee; color: #d32f2f; }
+        .s-btn.on { background: #e8f5e9; color: #2e7d32; }
     </style>
 </head>
 <body onclick="initAudio()">
 
 <div class="header">
-    <h2 style="margin:0;">小紅帽 訂單看板</h2>
-    <div id="audio-tip" style="background:#ffeb3b; color:#333; font-size:0.85rem; padding:6px 12px; margin-top:10px; border-radius:20px; display:inline-block; cursor:pointer; font-weight:bold;">🔔 點我啟動語音提醒</div>
+    <h2 style="margin:0;">訂單看板 (一行一項)</h2>
+    <div id="audio-tip" onclick="initAudio()" style="background:#ffeb3b; color:#333; padding:8px 15px; margin-top:10px; border-radius:20px; display:inline-block; cursor:pointer; font-weight:bold;">🔔 點此開啟語音提醒</div>
 </div>
 
-<div id="list" style="padding:0 5px; min-height: 50px;"></div>
+<div id="list" style="padding:0 5px;"></div>
 
 <div class="stat-box">
-    <div>今日總營收<br><b style="font-size:1.5rem; color:#FBC02D;">$<span id="total-rev">0</span></b></div>
-    <button class="btn-clear" onclick="clearAllOrders()">🧹 開店清空</button>
+    <div>今日營收 <b style="font-size:1.6rem; color:#FBC02D;">$<span id="total-rev">0</span></b></div>
+    <button onclick="clearAllOrders()" style="background:#f44336; color:white; border:none; padding:10px 20px; border-radius:10px; font-weight:bold; cursor:pointer;">🧹 開店歸零</button>
 </div>
 
 <div class="admin-section" style="border: 2px solid #d32f2f;">
-    <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-        <span style="color:#d32f2f; font-weight:bold;">⭐ 限定口味:</span>
-        <input type="text" id="ltd-n" placeholder="名稱" style="flex:2; padding:8px;">
-        <input type="number" id="ltd-p" placeholder="價格" style="flex:1; padding:8px;">
-        <button onclick="saveLtd()" style="background:#d32f2f; color:#fff; border:none; padding:8px 15px; border-radius:5px;">儲存</button>
+    <div style="display:flex; align-items:center; gap:8px;">
+        <b>⭐ 限定:</b>
+        <input type="text" id="ltd-n" placeholder="口味" style="flex:2; padding:8px;">
+        <input type="number" id="ltd-p" placeholder="價" style="flex:1; padding:8px;">
+        <button onclick="saveLtd()" style="background:#d32f2f; color:#fff; border:none; padding:8px 10px; border-radius:5px;">儲存</button>
     </div>
 </div>
 
 <div class="admin-section">
-    <h4 style="margin:0 0 10px 0;">🚫 供應狀態管理</h4>
     <div id="stock-ctrl" class="stock-grid"></div>
 </div>
 
@@ -59,44 +79,71 @@
     const db = getFirestore(app);
 
     let audioReady = false; let isFirst = true;
-    window.initAudio = () => { if(!audioReady){ window.speechSynthesis.speak(new SpeechSynthesisUtterance("OK")); audioReady=true; document.getElementById('audio-tip').innerText="✅ 語音已開啟"; document.getElementById('audio-tip').style.background="#c8e6c9"; }};
+    window.initAudio = () => { if(!audioReady){ window.speechSynthesis.speak(new SpeechSynthesisUtterance("啟動")); audioReady=true; document.getElementById('audio-tip').innerText="✅ 語音已開啟"; document.getElementById('audio-tip').style.background="#c8e6c9"; }};
 
     onSnapshot(query(collection(db, "orders"), orderBy("timestamp", "asc")), (snap) => {
         if (!isFirst && snap.docChanges().some(c => c.type === "added")) { window.speechSynthesis.speak(new SpeechSynthesisUtterance("新訂單")); }
         isFirst = false;
         const list = document.getElementById('list'); let rev = 0; list.innerHTML = "";
+        
         snap.forEach(d => {
-            const o = d.data(); const isL = o.payMethod === 'Line Pay'; rev += (parseInt(o.total.replace(/[^0-9]/g, "")) || 0);
-            const div = document.createElement('div'); div.className = `order-card ${isL?'line':'cash'}`;
-            div.innerHTML = `<div class="order-no-badge">#${o.orderNo}</div><div style="font-size:0.75rem;color:#888;">${o.time}</div><div class="tag" style="background:${isL?'#00B900':'#666'}">${isL?'📱 LINE Pay':'💰 現場現金'}</div><div class="item-text">${o.items}</div><div style="display:flex;justify-content:space-between;align-items:center;"><b style="color:#d32f2f;font-size:1.5rem;">${o.total}</b><button onclick="confirmDelete('${d.id}', '${o.orderNo}')" style="border:none;padding:10px 20px;border-radius:8px;background:#d32f2f;color:#fff;font-weight:bold;">完成</button></div>`;
+            const o = d.data(); 
+            const isL = o.payMethod === 'Line Pay'; 
+            rev += (parseInt(o.total.replace(/[^0-9]/g, "")) || 0);
+
+            // 解析並強制「一行一個品項」
+            const itemsArray = o.items.split(', ');
+            let itemsHtml = '<div class="item-list">';
+            itemsArray.forEach(item => {
+                const parts = item.split('x');
+                let name = parts[0];
+                let qty = parts[1] || "1";
+                
+                // 處理混搭口味顯示，把詳細比例拆到第二行
+                let title = name;
+                let sub = "";
+                if(name.includes(']')) {
+                    title = name.split(']')[0] + "]"; // 保留 [超值] 或 [自由]
+                    sub = `<span class="mix-info">➔ ${name.split(']')[1]}</span>`;
+                }
+
+                itemsHtml += `
+                    <div class="item-row">
+                        <div class="item-name">${title}${sub}</div>
+                        <div class="item-qty">x${qty}</div>
+                    </div>`;
+            });
+            itemsHtml += '</div>';
+
+            const div = document.createElement('div');
+            div.className = `order-card ${isL?'line':'cash'}`;
+            div.innerHTML = `
+                <div class="order-no-badge">#${o.orderNo}</div>
+                <div class="tag" style="background:${isL?'#00B900':'#666'}">${isL?'LINE Pay':'現場現金'}</div>
+                <div style="font-size:0.9rem; color:#888;">時間：${o.time}</div>
+                ${itemsHtml}
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:15px; border-top:2px solid #eee; padding-top:15px;">
+                    <b style="color:#d32f2f; font-size:1.8rem;">${o.total}</b>
+                    <button onclick="confirmDelete('${d.id}', '${o.orderNo}')" style="border:none; padding:15px 30px; border-radius:12px; background:#d32f2f; color:#fff; font-weight:bold; font-size:1.3rem; cursor:pointer;">完成出餐</button>
+                </div>`;
             list.appendChild(div);
         });
         document.getElementById('total-rev').innerText = rev;
-        if(snap.empty) list.innerHTML = "<p style='text-align:center; color:#888;'>等待訂單中...</p>";
+        if(snap.empty) list.innerHTML = "<p style='text-align:center; color:#888; padding:50px;'>☕ 目前沒有訂單</p>";
     });
 
-    window.confirmDelete = async (id, no) => { if(confirm(`序號 #${no} 出餐完成？`)) await deleteDoc(doc(db, 'orders', id)); };
-
-    window.clearAllOrders = async () => {
-        if(confirm("確定要清空所有訂單並重新從 1 號開始排號嗎？")) {
-            const qSnap = await getDocs(collection(db, "orders"));
-            const batch = writeBatch(db);
-            qSnap.forEach(d => batch.delete(d.ref));
-            await batch.commit();
-            alert("已清空，下一筆將從 1 號開始！");
-        }
-    };
-
+    window.confirmDelete = async (id, no) => { if(confirm(`序號 #${no} 已完成？`)) await deleteDoc(doc(db, 'orders', id)); };
+    window.clearAllOrders = async () => { if(confirm("確定歸零？號碼將從 1 開始。")) { const q = await getDocs(collection(db, "orders")); const b = writeBatch(db); q.forEach(d=>b.delete(d.ref)); await b.commit(); }};
     const baseItems = ["古早原味","爆漿奶油","熔岩巧克力","肉鬆沙拉","黃金起司","玉米起司","鮪魚起司","半月OREO","蛋黃奶酥"];
-    let currentLtdName = "";
-    function updateStockUI(soldList) {
-        let allItems = [...baseItems]; if (currentLtdName) allItems.push(currentLtdName); 
-        document.getElementById('stock-ctrl').innerHTML = allItems.map(n => `<button class="s-btn ${soldList.includes(n)?'off':'on'}" onclick="toggleSold('${n}',${soldList.includes(n)})">${n}</button>`).join('');
-        window.curSold = soldList;
+    let curLtd = "";
+    function updateStockUI(sList) {
+        let all = [...baseItems]; if(curLtd) all.push(curLtd);
+        document.getElementById('stock-ctrl').innerHTML = all.map(n => `<button class="s-btn ${sList.includes(n)?'off':'on'}" onclick="toggleSold('${n}',${sList.includes(n)})">${n}</button>`).join('');
+        window.curSold = sList;
     }
     onSnapshot(doc(db, "settings", "menuStatus"), s => updateStockUI(s.exists() ? s.data().soldOut || [] : []));
-    onSnapshot(doc(db, "settings", "limitedEdition"), s => { if(s.exists()){ currentLtdName = s.data().name; getDoc(doc(db, "settings", "menuStatus")).then(ss => updateStockUI(ss.exists() ? ss.data().soldOut || [] : [])); }});
-    window.toggleSold = async (n, isSold) => { await setDoc(doc(db, "settings", "menuStatus"), { soldOut: isSold ? window.curSold.filter(i=>i!==n) : [...window.curSold, n] }); };
+    onSnapshot(doc(db, "settings", "limitedEdition"), s => { if(s.exists()){ curLtd = s.data().name; getDoc(doc(db, "settings", "menuStatus")).then(ss => updateStockUI(ss.exists() ? ss.data().soldOut || [] : [])); }});
+    window.toggleSold = async (n, isS) => { await setDoc(doc(db, "settings", "menuStatus"), { soldOut: isS ? window.curSold.filter(i=>i!==n) : [...window.curSold, n] }); };
     window.saveLtd = async () => { await setDoc(doc(db, "settings", "limitedEdition"), { name: document.getElementById('ltd-n').value, price: Number(document.getElementById('ltd-p').value) }); alert("OK"); };
 </script>
 </body>

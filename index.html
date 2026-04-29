@@ -6,17 +6,20 @@
     <title>小紅帽雞蛋糕點餐</title>
     <style>
         body { font-family: -apple-system, sans-serif; background: #FFF9E1; margin: 0; padding-bottom: 100px; }
-        .header { background: #d32f2f; color: white; padding: 20px; text-align: center; }
-        .category-title { background: #FBC02D; display: inline-block; padding: 5px 15px; border-radius: 20px; font-weight: bold; margin: 15px; }
-        .menu-item { background: white; margin: 8px 15px; padding: 12px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        /* 縮小標頭空間 */
+        .header { background: #d32f2f; color: white; padding: 10px 0; text-align: center; }
+        .header h1 { margin: 5px 0; font-size: 1.5rem; }
+        
+        .category-title { background: #FBC02D; display: inline-block; padding: 5px 15px; border-radius: 20px; font-weight: bold; margin: 12px 15px 8px; font-size: 0.9rem; }
+        .menu-item { background: white; margin: 5px 15px; padding: 10px 12px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         .item-info b { font-size: 1.1rem; }
         .item-info span { color: #d32f2f; font-weight: bold; margin-left: 8px; }
         .qty-controls { display: flex; align-items: center; gap: 10px; }
         .btn-qty { width: 30px; height: 30px; border-radius: 50%; border: 1px solid #ccc; background: #fff; font-size: 1.2rem; }
-        .mix-box { background: #fff; margin: 10px 15px; padding: 15px; border-radius: 12px; border: 2px solid #FBC02D; }
-        select { width: 100%; padding: 12px; border-radius: 8px; margin: 5px 0 10px; background: #fff; border: 1px solid #ddd; font-size: 1rem; }
-        #mix-preview-text, #free-mix-preview { margin: 5px 0 12px; padding: 10px; background: #fff9e1; border: 1px dashed #FBC02D; border-radius: 8px; font-size: 0.95rem; color: #444; text-align: center; }
-        .cart-bar { position: fixed; bottom: 0; width: 100%; background: white; padding: 15px; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; z-index: 99; }
+        .mix-box { background: #fff; margin: 5px 15px; padding: 12px; border-radius: 12px; border: 2px solid #FBC02D; }
+        select { width: 100%; padding: 10px; border-radius: 8px; margin: 5px 0 8px; background: #fff; border: 1px solid #ddd; font-size: 1rem; }
+        #mix-preview-text, #free-mix-preview { margin: 5px 0 10px; padding: 8px; background: #fff9e1; border: 1px dashed #FBC02D; border-radius: 8px; font-size: 0.9rem; color: #444; text-align: center; }
+        .cart-bar { position: fixed; bottom: 0; width: 100%; background: white; padding: 12px 15px; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; z-index: 99; }
         .btn-submit { background: #d32f2f; color: white; padding: 10px 20px; border-radius: 20px; border: none; font-weight: bold; font-size: 1rem; cursor: pointer; }
         .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 100; }
         .ticket { background: white; width: 90%; max-width: 400px; padding: 20px; border-radius: 20px; text-align: center; box-sizing: border-box; max-height: 90vh; overflow-y: auto; }
@@ -39,15 +42,15 @@
     <p>目前非營業時間，暫時無法點餐。</p>
 </div>
 
-<div class="header"><h1>小紅帽雞蛋糕</h1><p> 每份 5 顆</p></div>
+<div class="header"><h1>小紅帽雞蛋糕</h1></div>
 
 <div class="category-title">單一口味 (5顆)</div>
 <div id="single-list"></div>
 
 <div class="category-title">自由混搭 (3+2顆)</div>
 <div class="mix-box">
-    <label>誰要 3 顆？</label><select id="free-3btn" onchange="updateFreeMixPreview()"></select>
-    <label>誰要 2 顆？</label><select id="free-2btn" onchange="updateFreeMixPreview()"></select>
+    <label style="font-size:0.85rem; color:#666;">主選 3 顆：</label><select id="free-3btn" onchange="updateFreeMixPreview()"></select>
+    <label style="font-size:0.85rem; color:#666;">副選 2 顆：</label><select id="free-2btn" onchange="updateFreeMixPreview()"></select>
     <div id="free-mix-preview" style="display:none;"></div>
     <button onclick="addFreeMix()" style="width:100%; padding:10px; background:#FBC02D; border:none; border-radius:8px; font-weight:bold;">確認混搭加入購物車</button>
 </div>
@@ -117,7 +120,6 @@
         });
         document.getElementById('single-list').innerHTML = singleHtml;
 
-        // 混搭選單加入限定口味
         let mixOptions = [...baseMenu];
         if (limited.name) mixOptions.push({ name: `⭐${limited.name}`, realName: limited.name });
         const optionsHtml = '<option value="">請選擇</option>' + mixOptions.map(i => `<option value="${i.realName || i.name}" ${soldOutList.includes(i.realName || i.name)?'disabled':''}>${i.name}</option>`).join('');
@@ -142,7 +144,7 @@
             const p2 = all.find(i=>i.name===m2)?.price || 0;
             const max = Math.max(p3, p2);
             window.currentFreeMixPrice = max;
-            pre.innerHTML = `已選：<b>${m3}(3)+${m2}(2)</b><br>混搭價格：<b style="color:#d32f2f;">$${max}</b>`;
+            pre.innerHTML = `已選：<b>${m3}(3)+${m2}(2)</b><br>計算價格：<b style="color:#d32f2f;">$${max}</b>`;
             pre.style.display = 'block';
         } else { pre.style.display = 'none'; }
     };

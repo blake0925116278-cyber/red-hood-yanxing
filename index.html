@@ -2,71 +2,83 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>小紅帽雞蛋糕 - 線上點餐</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>小紅帽雞蛋糕點餐</title>
     <style>
-        body { font-family: -apple-system, sans-serif; background: #f8f9fa; padding: 0; margin: 0; color: #333; padding-bottom: 120px; }
-        .header { background: #d32f2f; color: #fff; padding: 15px; text-align: center; border-radius: 0 0 20px 20px; }
-        .container { padding: 15px; }
-        .category-title { font-weight: bold; margin: 20px 0 10px; color: #d32f2f; border-left: 4px solid #d32f2f; padding-left: 8px; }
-        .item-card { background: #fff; display: flex; justify-content: space-between; align-items: center; padding: 12px; margin-bottom: 8px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .item-info b { font-size: 1.05rem; display: block; }
-        .item-info span { color: #d32f2f; font-weight: bold; }
-        .add-btn { background: #d32f2f; color: #fff; border: none; padding: 8px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; }
-        .add-btn:disabled { background: #ccc; }
-        .mix-box { background: #fff; padding: 15px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 15px; }
-        select { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; background: #fafafa; }
-        #mix-preview-text { margin: 5px 0 12px; padding: 10px; background: #fff9e1; border: 1px dashed #FBC02D; border-radius: 8px; font-size: 0.95rem; color: #444; text-align: center; }
-        .cart-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; padding: 15px; box-shadow: 0 -2px 15px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; z-index: 100; }
-        .btn-send { background: #2e7d32; color: #fff; border: none; padding: 12px 25px; border-radius: 10px; font-size: 1.1rem; font-weight: bold; }
+        body { font-family: -apple-system, sans-serif; background: #FFF9E1; margin: 0; padding-bottom: 100px; }
+        .header { background: #d32f2f; color: white; padding: 20px; text-align: center; }
+        .category-title { background: #FBC02D; display: inline-block; padding: 5px 15px; border-radius: 20px; font-weight: bold; margin: 15px; }
+        .menu-item { background: white; margin: 8px 15px; padding: 12px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .item-info b { font-size: 1.1rem; }
+        .item-info span { color: #d32f2f; font-weight: bold; margin-left: 8px; }
+        .qty-controls { display: flex; align-items: center; gap: 10px; }
+        .btn-qty { width: 30px; height: 30px; border-radius: 50%; border: 1px solid #ccc; background: #fff; font-size: 1.2rem; }
+        .mix-box { background: #fff; margin: 10px 15px; padding: 15px; border-radius: 12px; border: 2px solid #FBC02D; }
+        select { width: 100%; padding: 10px; border-radius: 8px; margin: 5px 0 10px; background: #fff; border: 1px solid #ddd; font-size: 1rem; }
+        .cart-bar { position: fixed; bottom: 0; width: 100%; background: white; padding: 15px; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; z-index: 99; }
+        .btn-submit { background: #d32f2f; color: white; padding: 10px 20px; border-radius: 20px; border: none; font-weight: bold; font-size: 1rem; cursor: pointer; }
+        
+        /* 彈出層與明細表樣式 */
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 100; overflow-y: auto; }
+        .ticket { background: white; width: 90%; max-width: 400px; padding: 20px; border-radius: 20px; text-align: center; box-sizing: border-box; }
+        .order-num { font-size: 4rem; font-weight: 900; margin: 15px 0; color: #d32f2f; border: 4px solid #d32f2f; display: inline-block; padding: 0 25px; border-radius: 15px; }
+        .detail-table { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 0.95rem; text-align: left; }
+        .detail-table th { border-bottom: 2px solid #eee; padding: 8px; color: #666; }
+        .detail-table td { padding: 8px; border-bottom: 1px solid #eee; }
+        .pay-btn { width: 100%; padding: 12px; border-radius: 8px; border: none; font-weight: bold; margin-bottom: 8px; font-size: 1rem; cursor: pointer; }
     </style>
 </head>
 <body>
 
-<div class="header">
-    <h2 style="margin:0;">小紅帽雞蛋糕</h2>
-    <p style="margin:5px 0 0; font-size:0.8rem; opacity:0.9;">每份 5 顆 · 純鮮奶製作</p>
-</div>
+<div class="header"><h1>小紅帽雞蛋糕</h1><p>選好口味後請送出訂單</p></div>
 
-<div class="container">
-    <div class="category-title">單點口味 (每份5顆)</div>
-    <div id="menu-list"></div>
+<div class="category-title">單一口味 (5顆)</div>
+<div id="single-list"></div>
 
-    <div class="category-title">混搭方式 (3 + 2 顆)</div>
-    <div class="mix-box">
-        <label style="font-size:0.85rem; color:#666;">選擇組合：</label>
-        <select id="fixed-mix-select" onchange="updateFixedMixOptions()"></select>
-        <div id="fixed-mix-config" style="display:none;">
-            <label style="font-size:0.85rem; color:#d32f2f; font-weight:bold;">誰要 3 顆？</label>
-            <select id="fixed-3btn" onchange="showMixPreview()"></select>
-            <div id="mix-preview-text" style="display:none;"></div>
-            <button onclick="addFixedMix()" style="width:100%; padding:12px; background:#d32f2f; color:white; border:none; border-radius:10px; font-weight:bold;">確認加入 $ <span id="fixed-p">0</span></button>
-        </div>
+<div class="category-title">超值快選混搭 (3+2顆)</div>
+<div class="mix-box">
+    <label style="font-size:0.85rem; color:#666;">選擇組合：</label>
+    <select id="fixed-mix-select" onchange="updateFixedMixOptions()"></select>
+    <div id="fixed-mix-config" style="display:none; background:#fff9e1; padding:10px; border-radius:8px;">
+        <label style="font-size:0.85rem; color:#d32f2f; font-weight:bold;">誰要 3 顆？</label>
+        <select id="fixed-3btn"></select>
+        <button onclick="addFixedMix()" style="width:100%; padding:10px; background:#d32f2f; color:white; border:none; border-radius:8px; font-weight:bold;">確認加入 $ <span id="fixed-p">0</span></button>
     </div>
-
-    <div class="category-title">購物車</div>
-    <div id="cart-list" style="background:#eee; padding:10px; border-radius:10px; font-size:0.9rem; color:#666;">尚未點餐</div>
 </div>
+
+<div class="category-title">✨ 自由配混搭 (共5顆)</div>
+<div class="mix-box" style="border-style: dashed;">
+    <label style="font-size:0.85rem; color:#666;">口味 A (3顆)：</label>
+    <select id="mix-a"></select>
+    <label style="font-size:0.85rem; color:#666;">口味 B (2顆)：</label>
+    <select id="mix-b"></select>
+    <button onclick="addCustomMix()" style="width:100%; padding:10px; background:#FBC02D; border:none; border-radius:8px; font-weight:bold;">加入自選混搭</button>
+</div>
+
+<div id="custom-cart-list" style="margin: 10px 15px;"></div>
 
 <div class="cart-bar">
-    <div>總計：<b style="font-size:1.5rem; color:#d32f2f;">$<span id="total-price">0</span></b></div>
-    <button class="btn-send" onclick="sendOrder()">確認下單</button>
+    <div>總計：<span id="cart-total" style="font-size:1.4rem; color:#d32f2f; font-weight:bold;">$0</span></div>
+    <button class="btn-submit" onclick="showPaySelect()">送出訂單</button>
+</div>
+
+<div id="overlay" class="overlay">
+    <div id="ticket-content" class="ticket">
+        </div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, collection, addDoc, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, serverTimestamp, onSnapshot, doc, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = { apiKey: "AIzaSyAbG0YttR57SQ5Xr_xPTKY1DoVgPtcnJzc", authDomain: "myordersystem-dee08.firebaseapp.com", projectId: "myordersystem-dee08", storageBucket: "myordersystem-dee08.firebasestorage.app", messagingSenderId: "775750661450", appId: "1:775750661450:web:e56f00456f0285c8bebdb3" };
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // --- 完全對齊照片價格 ---
-    const baseItems = [
-        { n: "古早原味", p: 40 }, 
-        { n: "爆漿奶油", p: 45 }, { n: "熔岩巧克力", p: 45 }, { n: "肉鬆沙拉", p: 45 },
-        { n: "黃金起司", p: 50 }, { n: "玉米起司", p: 50 }, { n: "鮪魚起司", p: 50 },
-        { n: "半月OREO", p: 55 }, { n: "蛋黃奶酥", p: 55 }
+    const baseMenu = [
+        { name: "古早原味", price: 40 }, { name: "爆漿奶油", price: 45 }, { name: "熔岩巧克力", price: 45 },
+        { name: "肉鬆沙拉", price: 45 }, { name: "黃金起司", price: 50 }, { name: "玉米起司", price: 50 },
+        { name: "鮪魚起司", price: 50 }, { name: "半月OREO", price: 55 }, { name: "蛋黃奶酥", price: 55 }
     ];
 
     const fixedMixGroup = [
@@ -79,52 +91,45 @@
         { items: ["半月OREO", "蛋黃奶酥"], price: 55 }
     ];
 
-    let cart = [];
-    let soldOutList = [];
-    let ltdItem = null;
+    let cart = {}; let customItems = []; let soldOutList = []; let limited = { name: "", price: 0 };
 
-    onSnapshot(doc(db, "settings", "menuStatus"), s => { soldOutList = s.exists() ? s.data().soldOut || [] : []; renderMenu(); });
-    onSnapshot(doc(db, "settings", "limitedEdition"), s => { ltdItem = s.exists() ? s.data() : null; renderMenu(); });
+    onSnapshot(doc(db, "settings", "menuStatus"), s => { soldOutList = s.exists() ? s.data().soldOut || [] : []; render(); });
+    onSnapshot(doc(db, "settings", "limitedEdition"), s => { if(s.exists()){ limited = s.data(); render(); }});
 
-    function renderMenu() {
-        const list = document.getElementById('menu-list');
-        let items = [...baseItems];
-        if (ltdItem && ltdItem.name) items.push({ n: ltdItem.name, p: ltdItem.price, isLtd: true });
-        list.innerHTML = items.map(i => {
-            const isSold = soldOutList.includes(i.n);
-            return `<div class="item-card"><div class="item-info"><b>${i.isLtd ? '⭐' : ''}${i.n}</b><span>$${i.p}</span></div>
-                    <button class="add-btn" onclick="addToCart('${i.n}', ${i.p})" ${isSold ? 'disabled' : ''}>${isSold ? '完' : '加入'}</button></div>`;
-        }).join('');
-        const ms = document.getElementById('fixed-mix-select');
-        ms.innerHTML = '<option value="">請選擇混搭組合...</option>' + fixedMixGroup.map((g, idx) => `<option value="${idx}">${g.items.join(' + ')} ($${g.price})</option>`).join('');
+    function render() {
+        let singleHtml = "";
+        let currentSingle = [...baseMenu];
+        if (limited.name) currentSingle.push({ name: limited.name, price: limited.price, isLtd: true });
+
+        currentSingle.forEach(item => {
+            const isSold = soldOutList.includes(item.name);
+            singleHtml += `<div class="menu-item" style="${isSold?'opacity:0.5':''}">
+                <div class="item-info"><b>${item.isLtd?'⭐':''}${item.name}</b><span>$${item.price}</span></div>
+                <div class="qty-controls">${isSold ? '<span style="color:red">售完</span>' : `<button class="btn-qty" onclick="updateQty('${item.name}',-1,${item.price})">-</button><span id="q-${item.name}">${cart[item.name]||0}</span><button class="btn-qty" onclick="updateQty('${item.name}',1,${item.price})">+</button>`}</div>
+            </div>`;
+        });
+        document.getElementById('single-list').innerHTML = singleHtml;
+
+        let fixedOpt = '<option value="">-- 請選擇優惠組合 --</option>';
+        fixedMixGroup.forEach((g, idx) => {
+            const isSold = g.items.some(n => soldOutList.includes(n));
+            fixedOpt += `<option value="${idx}" ${isSold?'disabled':''}>${g.items.join('+')} ($${g.price})</option>`;
+        });
+        document.getElementById('fixed-mix-select').innerHTML = fixedOpt;
+
+        const optHtml = '<option value="">-- 請選擇 --</option>' + currentSingle.map(i => `<option value="${i.name}" ${soldOutList.includes(i.name)?'disabled':''}>${i.name} ($${i.price})</option>`).join('');
+        document.getElementById('mix-a').innerHTML = optHtml;
+        document.getElementById('mix-b').innerHTML = optHtml;
     }
 
     window.updateFixedMixOptions = () => {
         const idx = document.getElementById('fixed-mix-select').value;
-        const config = document.getElementById('fixed-mix-config');
-        if(!idx) { config.style.display = 'none'; return; }
+        const box = document.getElementById('fixed-mix-config');
+        if(!idx) { box.style.display = 'none'; return; }
         const group = fixedMixGroup[idx];
         document.getElementById('fixed-p').innerText = group.price;
-        document.getElementById('fixed-3btn').innerHTML = group.items.map(n => `<option value="${n}">${n} (3顆)</option>`).join('');
-        config.style.display = 'block';
-        showMixPreview();
-    };
-
-    window.showMixPreview = () => {
-        const main = document.getElementById('fixed-3btn').value;
-        const idx = document.getElementById('fixed-mix-select').value;
-        if(!main || !idx) return;
-        const group = fixedMixGroup[idx];
-        const other = group.items.find(i => i !== main);
-        const preview = document.getElementById('mix-preview-text');
-        preview.innerHTML = `🛒 已選：<b>${main} (3顆)</b> + <b>${other} (2顆)</b>`;
-        preview.style.display = 'block';
-    };
-
-    window.addToCart = (n, p) => {
-        const exist = cart.find(i => i.n === n);
-        if (exist) exist.q++; else cart.push({ n, p, q: 1 });
-        refreshCart();
+        document.getElementById('fixed-3btn').innerHTML = group.items.map(n => `<option value="${n}">${n} (3顆) + ${group.items.find(i=>i!==n)} (2顆)</option>`).join('');
+        box.style.display = 'block';
     };
 
     window.addFixedMix = () => {
@@ -132,45 +137,94 @@
         const main = document.getElementById('fixed-3btn').value;
         const group = fixedMixGroup[idx];
         const other = group.items.find(i => i !== main);
-        const name = `[混搭]${main}(3)+${other}(2)`;
-        const exist = cart.find(i => i.n === name);
-        if (exist) exist.q++; else cart.push({ n: name, p: group.price, q: 1 });
-        document.getElementById('fixed-mix-select').value = "";
-        document.getElementById('fixed-mix-config').style.display = "none";
+        customItems.push({ name: `[超值]${main}(3)+${other}(2)`, price: group.price });
         refreshCart();
     };
 
+    window.addCustomMix = () => {
+        const a = document.getElementById('mix-a').value, b = document.getElementById('mix-b').value;
+        if(!a || !b) return alert("請選好兩種口味！");
+        const pa = [...baseMenu, limited].find(i=>i.name===a).price, pb = [...baseMenu, limited].find(i=>i.name===b).price;
+        customItems.push({ name: `[自由]${a}(3)+${b}(2)`, price: Math.max(pa, pb) });
+        refreshCart();
+    };
+
+    window.updateQty = (name, c, p) => {
+        cart[name] = (cart[name] || 0) + c;
+        if(cart[name] <= 0) delete cart[name];
+        render(); calc();
+    };
+
+    window.removeItem = (i) => { customItems.splice(i,1); refreshCart(); };
+
     function refreshCart() {
-        const list = document.getElementById('cart-list');
-        if (cart.length === 0) { list.innerHTML = "尚未點餐"; document.getElementById('total-price').innerText = "0"; return; }
-        let total = 0;
-        list.innerHTML = cart.map((i, idx) => {
-            total += (i.p * i.q);
-            return `<div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span>${i.n} x ${i.q}</span><span onclick="window.removeCart(${idx})" style="color:#d32f2f;">移除</span></div>`;
-        }).join('');
-        document.getElementById('total-price').innerText = total;
+        document.getElementById('custom-cart-list').innerHTML = customItems.map((m,i)=>`
+            <div style="display:flex;justify-content:space-between;background:#fff;padding:10px;border-radius:8px;margin-bottom:5px;border:1px solid #FBC02D;">
+                <span>${m.name} <b>$${m.price}</b></span>
+                <span onclick="removeItem(${i})" style="color:red;font-weight:bold;cursor:pointer;">移除</span>
+            </div>`).join('');
+        calc();
     }
 
-    window.removeCart = (idx) => { cart.splice(idx, 1); refreshCart(); };
+    function calc() {
+        let t = 0;
+        Object.keys(cart).forEach(n => { const item = [...baseMenu, limited].find(i=>i.name===n); if(item) t += item.price*cart[n]; });
+        customItems.forEach(m => t += m.price);
+        document.getElementById('cart-total').innerText = `$${t}`;
+    }
 
-    window.sendOrder = async () => {
-        if (cart.length === 0) return alert("請先點餐");
-        if (!confirm("確認下單？")) return;
-        const orderNo = Math.floor(Math.random() * 900) + 100;
-        const orderData = {
-            orderNo: orderNo,
-            items: cart.map(i => `${i.n}x${i.q}`).join(', '),
-            total: `NT$${document.getElementById('total-price').innerText}`,
-            time: new Date().toLocaleTimeString('zh-TW', {hour12: false, hour: '2-digit', minute:'2-digit'}),
-            timestamp: Date.now(),
-            payMethod: "現場付款",
-            status: "pending"
-        };
+    // --- 修改後的明細顯示邏輯 ---
+    window.showPaySelect = () => {
+        const totalStr = document.getElementById('cart-total').innerText;
+        if(totalStr === "$0") return alert("購物車是空的喔！");
+
+        let detailHtml = `<h3 style="margin-bottom:10px;">確認餐點明細</h3><table class="detail-table"><tr><th>品項</th><th style="text-align:center;">數量</th><th>單價</th></tr>`;
+        
+        // 1. 單一口味明細
+        Object.keys(cart).forEach(n => {
+            const item = [...baseMenu, limited].find(i => i.name === n);
+            detailHtml += `<tr><td>${n}</td><td style="text-align:center;">${cart[n]}份</td><td>$${item.price}</td></tr>`;
+        });
+        
+        // 2. 混搭口味明細
+        customItems.forEach(m => {
+            detailHtml += `<tr><td>${m.name}</td><td style="text-align:center;">1份</td><td>$${m.price}</td></tr>`;
+        });
+
+        detailHtml += `</table><div style="font-size:1.2rem; font-weight:bold; color:#d32f2f; margin:15px 0;">總計金額：${totalStr}</div>`;
+        detailHtml += `<p style="color:#666; font-size:0.9rem;">請選擇付款方式完成訂單：</p>
+            <button class="pay-btn" style="background:#00B900;color:white;" onclick="submit('Line Pay','${totalStr}')">📱 LINE Pay</button>
+            <button class="pay-btn" style="background:#666;color:white;" onclick="submit('現場付款','${totalStr}')">💰 現場現金</button>
+            <button style="background:none;border:none;color:#888;margin-top:10px;text-decoration:underline;cursor:pointer;" onclick="document.getElementById('overlay').style.display='none'">再改一下 (返回)</button>`;
+
+        document.getElementById('ticket-content').innerHTML = detailHtml;
+        document.getElementById('overlay').style.display = 'flex';
+    };
+
+    window.submit = async (m, t) => {
         try {
-            await addDoc(collection(db, "orders"), orderData);
-            alert(`下單成功！序號：#${orderNo}`);
-            cart = []; refreshCart();
-        } catch (e) { alert("失敗，請重試"); }
+            const qSnap = await getDocs(collection(db, "orders"));
+            const no = qSnap.size + 1;
+            let items = [];
+            Object.keys(cart).forEach(n => items.push(`${n}x${cart[n]}`));
+            customItems.forEach(ci => items.push(`${ci.name}x1`));
+
+            await addDoc(collection(db, "orders"), { 
+                orderNo: no, items: items.join(', '), total: t, payMethod: m, 
+                time: new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}), 
+                timestamp: serverTimestamp() 
+            });
+
+            document.getElementById('ticket-content').innerHTML = `
+                <h2 style="color:#2ecc71;">✓ 訂單已送出</h2>
+                <p style="margin:0;color:#666;">您的取餐序號</p>
+                <div class="order-num">${no}</div>
+                <p>請記住號碼並向櫃檯領餐，謝謝！</p>
+                <button class="pay-btn" style="background:#d32f2f;color:white;" onclick="location.reload()">好的</button>
+            `;
+        } catch (e) {
+            alert("系統忙碌中，請重新嘗試！");
+        }
     };
 </script>
 </body>

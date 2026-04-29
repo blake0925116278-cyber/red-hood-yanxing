@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>小紅帽管理後台 - 每日營運版</title>
+    <title>小紅帽管理後台</title>
     <style>
         body { font-family: sans-serif; background: #f4f4f4; padding: 10px; margin: 0; }
         .header { background: #d32f2f; color: #fff; padding: 10px; text-align: center; border-radius: 0 0 15px 15px; margin-bottom: 10px; }
         .order-card { background: #fff; padding: 15px; margin-top: 10px; border-radius: 12px; position: relative; border-left: 10px solid #ddd; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .order-card.line { border-left-color: #00B900; }
         .order-card.cash { border-left-color: #666; }
-        .order-no-badge { position: absolute; right: 15px; top: 15px; background: #333; color: #fff; padding: 5px 12px; border-radius: 8px; font-size: 1.4rem; font-weight: bold; }
-        .item-text { font-size: 1.25rem; font-weight: bold; margin: 12px 0; color: #d32f2f; line-height: 1.5; padding-right: 60px; }
+        .order-no-badge { position: absolute; right: 15px; top: 15px; background: #333; color: #fff; padding: 5px 12px; border-radius: 8px; font-size: 1.5rem; font-weight: bold; }
+        .item-text { font-size: 1.3rem; font-weight: bold; margin: 12px 0; color: #d32f2f; line-height: 1.5; padding-right: 70px; }
         .tag { display: inline-block; padding: 3px 10px; border-radius: 5px; font-size: 0.8rem; font-weight: bold; color: white; margin-bottom: 5px; }
         .stock-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 8px; margin-top: 10px; }
         .s-btn { padding: 10px 4px; font-size: 0.8rem; border: 1px solid #ccc; border-radius: 8px; cursor: pointer; text-align: center; font-weight: bold; }
@@ -19,7 +19,7 @@
         .s-btn.on { background: #c8e6c9; color: #2e7d32; border-color: #a5d6a7; }
         .stat-box { background: #222; color: #fff; padding: 15px; border-radius: 12px; margin: 10px 5px; display: flex; justify-content: space-between; align-items: center; }
         .admin-section { background: #fff; padding: 15px; border-radius: 12px; margin: 10px 5px; border: 1px solid #ddd; }
-        .btn-clear { background: #555; color: white; border: none; padding: 8px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.85rem; }
+        .btn-clear { background: #555; color: white; border: none; padding: 8px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body onclick="initAudio()">
@@ -29,27 +29,24 @@
     <div id="audio-tip" style="background:#ffeb3b; color:#333; font-size:0.85rem; padding:6px 12px; margin-top:10px; border-radius:20px; display:inline-block; cursor:pointer; font-weight:bold;">🔔 點我啟動語音提醒</div>
 </div>
 
-<div id="list" style="padding:0 5px; min-height: 50px;">讀取訂單中...</div>
+<div id="list" style="padding:0 5px; min-height: 50px;"></div>
 
 <div class="stat-box">
-    <div>
-        <span style="font-size: 0.8rem; color: #aaa;">今日預估總營收</span><br>
-        <b style="font-size:1.5rem; color:#FBC02D;">$<span id="total-rev">0</span></b>
-    </div>
+    <div>今日總營收<br><b style="font-size:1.5rem; color:#FBC02D;">$<span id="total-rev">0</span></b></div>
     <button class="btn-clear" onclick="clearAllOrders()">🧹 開店清空</button>
 </div>
 
 <div class="admin-section" style="border: 2px solid #d32f2f;">
     <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-        <span style="color:#d32f2f; font-weight:bold; font-size:0.95rem;">⭐ 限定口味:</span>
-        <input type="text" id="ltd-n" placeholder="名稱" style="flex:2; padding:8px; border:1px solid #ddd; border-radius:5px; font-size:0.9rem;">
-        <input type="number" id="ltd-p" placeholder="價格" style="flex:1; padding:8px; border:1px solid #ddd; border-radius:5px; font-size:0.9rem;">
-        <button onclick="saveLtd()" style="background:#d32f2f; color:#fff; border:none; padding:8px 15px; border-radius:5px; font-weight:bold; font-size:0.9rem; cursor:pointer;">儲存</button>
+        <span style="color:#d32f2f; font-weight:bold;">⭐ 限定口味:</span>
+        <input type="text" id="ltd-n" placeholder="名稱" style="flex:2; padding:8px;">
+        <input type="number" id="ltd-p" placeholder="價格" style="flex:1; padding:8px;">
+        <button onclick="saveLtd()" style="background:#d32f2f; color:#fff; border:none; padding:8px 15px; border-radius:5px;">儲存</button>
     </div>
 </div>
 
 <div class="admin-section">
-    <h4 style="margin:0 0 10px 0; color:#333; font-size:1rem;">🚫 供應狀態管理</h4>
+    <h4 style="margin:0 0 10px 0;">🚫 供應狀態管理</h4>
     <div id="stock-ctrl" class="stock-grid"></div>
 </div>
 
@@ -57,84 +54,50 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getFirestore, collection, query, orderBy, onSnapshot, doc, deleteDoc, setDoc, getDoc, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    const firebaseConfig = { 
-        apiKey: "AIzaSyAbG0YttR57SQ5Xr_xPTKY1DoVgPtcnJzc", 
-        authDomain: "myordersystem-dee08.firebaseapp.com", 
-        projectId: "myordersystem-dee08", 
-        storageBucket: "myordersystem-dee08.firebasestorage.app", 
-        messagingSenderId: "775750661450", 
-        appId: "1:775750661450:web:e56f00456f0285c8bebdb3" 
-    };
-
+    const firebaseConfig = { apiKey: "AIzaSyAbG0YttR57SQ5Xr_xPTKY1DoVgPtcnJzc", authDomain: "myordersystem-dee08.firebaseapp.com", projectId: "myordersystem-dee08", storageBucket: "myordersystem-dee08.firebasestorage.app", messagingSenderId: "775750661450", appId: "1:775750661450:web:e56f00456f0285c8bebdb3" };
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // 語音初始化
     let audioReady = false; let isFirst = true;
-    window.initAudio = () => { if(!audioReady){ window.speechSynthesis.speak(new SpeechSynthesisUtterance("語音提醒已啟動")); audioReady=true; document.getElementById('audio-tip').innerText="✅ 語音提醒運作中"; document.getElementById('audio-tip').style.background="#c8e6c9"; }};
+    window.initAudio = () => { if(!audioReady){ window.speechSynthesis.speak(new SpeechSynthesisUtterance("OK")); audioReady=true; document.getElementById('audio-tip').innerText="✅ 語音已開啟"; document.getElementById('audio-tip').style.background="#c8e6c9"; }};
 
-    // 訂單監聽
-    onSnapshot(query(collection(db, "orders"), orderBy("timestamp", "desc")), (snap) => {
+    onSnapshot(query(collection(db, "orders"), orderBy("timestamp", "asc")), (snap) => {
         if (!isFirst && snap.docChanges().some(c => c.type === "added")) { window.speechSynthesis.speak(new SpeechSynthesisUtterance("新訂單")); }
         isFirst = false;
         const list = document.getElementById('list'); let rev = 0; list.innerHTML = "";
         snap.forEach(d => {
             const o = d.data(); const isL = o.payMethod === 'Line Pay'; rev += (parseInt(o.total.replace(/[^0-9]/g, "")) || 0);
             const div = document.createElement('div'); div.className = `order-card ${isL?'line':'cash'}`;
-            div.innerHTML = `<div class="order-no-badge">#${o.orderNo}</div><div style="font-size:0.75rem;color:#888;">${o.time}</div><div class="tag" style="background:${isL?'#00B900':'#666'}">${isL?'📱 LINE Pay':'💰 現場現金'}</div><div class="item-text">${o.items}</div><div style="display:flex;justify-content:space-between;align-items:center;"><b style="color:#d32f2f;font-size:1.5rem;">${o.total}</b><button onclick="confirmDelete('${d.id}', '${o.orderNo}')" style="border:none;padding:10px 20px;border-radius:8px;background:#d32f2f;color:#fff;font-weight:bold;cursor:pointer;">完成</button></div>`;
+            div.innerHTML = `<div class="order-no-badge">#${o.orderNo}</div><div style="font-size:0.75rem;color:#888;">${o.time}</div><div class="tag" style="background:${isL?'#00B900':'#666'}">${isL?'📱 LINE Pay':'💰 現場現金'}</div><div class="item-text">${o.items}</div><div style="display:flex;justify-content:space-between;align-items:center;"><b style="color:#d32f2f;font-size:1.5rem;">${o.total}</b><button onclick="confirmDelete('${d.id}', '${o.orderNo}')" style="border:none;padding:10px 20px;border-radius:8px;background:#d32f2f;color:#fff;font-weight:bold;">完成</button></div>`;
             list.appendChild(div);
         });
         document.getElementById('total-rev').innerText = rev;
-        if(snap.empty) list.innerHTML = "<p style='text-align:center; color:#888; padding:20px;'>☕ 目前無訂單</p>";
+        if(snap.empty) list.innerHTML = "<p style='text-align:center; color:#888;'>等待訂單中...</p>";
     });
 
-    // 刪除單筆
     window.confirmDelete = async (id, no) => { if(confirm(`序號 #${no} 出餐完成？`)) await deleteDoc(doc(db, 'orders', id)); };
 
-    // 【新增】清空所有訂單功能
     window.clearAllOrders = async () => {
-        if(confirm("⚠️ 注意：這將會刪除「所有」訂單紀錄並將營收歸零！\n確定要開始新的一天嗎？")) {
-            if(confirm("再次確認：真的要全部刪除嗎？")) {
-                const qSnap = await getDocs(collection(db, "orders"));
-                const batch = writeBatch(db);
-                qSnap.forEach((d) => { batch.delete(d.ref); });
-                await batch.commit();
-                alert("訂單已全部清空，祝今天生意興隆！");
-            }
+        if(confirm("確定要清空所有訂單並重新從 1 號開始排號嗎？")) {
+            const qSnap = await getDocs(collection(db, "orders"));
+            const batch = writeBatch(db);
+            qSnap.forEach(d => batch.delete(d.ref));
+            await batch.commit();
+            alert("已清空，下一筆將從 1 號開始！");
         }
     };
 
-    // 口味狀態管理
-    const baseItems = ["古早原味","爆漿奶油","熔岩巧克力","肉鬆沙拉","黃金起司","玉米起司","鮪魚起司","半月OREO","蛋黃奶酥","奶油+巧克力","奶油+肉鬆","肉鬆+巧克力","起司+玉米","起司+鮪魚","玉米+鮪魚","OREO+奶酥"];
+    const baseItems = ["古早原味","爆漿奶油","熔岩巧克力","肉鬆沙拉","黃金起司","玉米起司","鮪魚起司","半月OREO","蛋黃奶酥"];
     let currentLtdName = "";
-
     function updateStockUI(soldList) {
         let allItems = [...baseItems]; if (currentLtdName) allItems.push(currentLtdName); 
-        document.getElementById('stock-ctrl').innerHTML = allItems.map(n => {
-            const isSold = soldList.includes(n);
-            return `<button class="s-btn ${isSold?'off':'on'}" onclick="toggleSold('${n}',${isSold})">${n}</button>`;
-        }).join('');
+        document.getElementById('stock-ctrl').innerHTML = allItems.map(n => `<button class="s-btn ${soldList.includes(n)?'off':'on'}" onclick="toggleSold('${n}',${soldList.includes(n)})">${n}</button>`).join('');
         window.curSold = soldList;
     }
-
-    onSnapshot(doc(db, "settings", "menuStatus"), s => { const sold = s.exists() ? s.data().soldOut || [] : []; updateStockUI(sold); });
-    onSnapshot(doc(db, "settings", "limitedEdition"), s => {
-        if(s.exists()){
-            document.getElementById('ltd-n').value = s.data().name || ""; document.getElementById('ltd-p').value = s.data().price || 0;
-            currentLtdName = s.data().name;
-            getDoc(doc(db, "settings", "menuStatus")).then(ss => { const sold = ss.exists() ? ss.data().soldOut || [] : []; updateStockUI(sold); });
-        }
-    });
-
-    window.toggleSold = async (n, isCurrentlySold) => {
-        let newList = isCurrentlySold ? window.curSold.filter(i=>i!==n) : [...window.curSold, n];
-        await setDoc(doc(db, "settings", "menuStatus"), { soldOut: newList });
-    };
-
-    window.saveLtd = async () => {
-        await setDoc(doc(db, "settings", "limitedEdition"), { name: document.getElementById('ltd-n').value, price: Number(document.getElementById('ltd-p').value) });
-        alert("限定口味更新成功！");
-    };
+    onSnapshot(doc(db, "settings", "menuStatus"), s => updateStockUI(s.exists() ? s.data().soldOut || [] : []));
+    onSnapshot(doc(db, "settings", "limitedEdition"), s => { if(s.exists()){ currentLtdName = s.data().name; getDoc(doc(db, "settings", "menuStatus")).then(ss => updateStockUI(ss.exists() ? ss.data().soldOut || [] : [])); }});
+    window.toggleSold = async (n, isSold) => { await setDoc(doc(db, "settings", "menuStatus"), { soldOut: isSold ? window.curSold.filter(i=>i!==n) : [...window.curSold, n] }); };
+    window.saveLtd = async () => { await setDoc(doc(db, "settings", "limitedEdition"), { name: document.getElementById('ltd-n').value, price: Number(document.getElementById('ltd-p').value) }); alert("OK"); };
 </script>
 </body>
 </html>

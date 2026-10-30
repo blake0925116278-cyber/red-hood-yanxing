@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>小紅帽雞蛋糕點餐</title>
+    <style>
+        body { font-family: -apple-system, sans-serif; background: #FFF9E1; margin: 0; padding-bottom: 100px; }
+        
+        /* 極簡化標頭 */
+        .header { background: #d32f2f; color: white; padding: 6px 0; text-align: center; }
+        .header h1 { margin: 0; font-size: 1.2rem; letter-spacing: 1px; }
+        
+        .category-title { background: #FBC02D; display: inline-block; padding: 4px 12px; border-radius: 20px; font-weight: bold; margin: 10px 15px 5px; font-size: 0.85rem; }
+        .menu-item { background: white; margin: 4px 15px; padding: 10px 12px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .item-info b { font-size: 1.05rem; }
+        .item-info span { color: #d32f2f; font-weight: bold; margin-left: 6px; }
+        .qty-controls { display: flex; align-items: center; gap: 10px; }
+        .btn-qty { width: 28px; height: 28px; border-radius: 50%; border: 1px solid #ccc; background: #fff; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; }
+        
+        .mix-box { background: #fff; margin: 5px 15px; padding: 10px 12px; border-radius: 12px; border: 2px solid #FBC02D; }
+        select { width: 100%; padding: 8px; border-radius: 8px; margin: 4px 0 6px; background: #fff; border: 1px solid #ddd; font-size: 0.95rem; -webkit-appearance: none; }
+        #mix-preview-text, #free-mix-preview { margin: 5px 0 8px; padding: 8px; background: #fff9e1; border: 1px dashed #FBC02D; border-radius: 8px; font-size: 0.85rem; color: #444; text-align: center; }
+        
+        .cart-bar { position: fixed; bottom: 0; width: 100%; background: white; padding: 10px 15px; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; z-index: 99; }
+        .btn-submit { background: #d32f2f; color: white; padding: 8px 18px; border-radius: 20px; border: none; font-weight: bold; font-size: 1rem; cursor: pointer; }
+        
+        /* 彈窗與工單樣式維持不變 */
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 10000; }
+        #pickup-chip { display: none; background: #c62828; color: #fff; margin: 8px 15px 0; padding: 10px 12px; border-radius: 10px; font-weight: bold; text-align: center; box-shadow: 0 4px 12px rgba(198,40,40,0.45); cursor: pointer; border: 2px solid #ff8a80; }
+        .overlay.pickup-mode { background: rgba(80, 0, 0, 0.78); }
+        .overlay.pickup-mode .ticket { background: #fff5f5; color: #7f0000; border: 3px solid #e53935; }
+        .overlay.pickup-mode .order-num { color: #c62828; border-color: #e53935; background: #ffcdd2; }
+        .overlay.pickup-mode .ready-time { color: #c62828; }
+        .overlay.pickup-mode h2 { color: #c62828 !important; }
+        .pickup-btn-main { background: #e53935 !important; color: #fff !important; }
+        .pickup-btn-sub { background: #8e0000 !important; color: #fff !important; }
+        .ticket { background: white; width: 90%; max-width: 400px; padding: 20px; border-radius: 20px; text-align: center; box-sizing: border-box; max-height: 90vh; overflow-y: auto; }
+        .order-num { font-size: 4rem; font-weight: 900; margin: 15px 0; color: #d32f2f; border: 4px solid #d32f2f; display: inline-block; padding: 0 25px; border-radius: 15px; }
+        .detail-table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 0.95rem; text-align: left; }
+        .detail-table th { border-bottom: 2px solid #eee; padding: 8px; color: #666; }
+        .detail-table td { padding: 8px; border-bottom: 1px solid #eee; }
+        .note-input { width: 100%; padding: 12px; margin: 10px 0; border: 2px solid #eee; border-radius: 10px; font-size: 1rem; box-sizing: border-box; }
+        .pay-btn { width: 100%; padding: 12px; border-radius: 8px; border: none; font-weight: bold; margin-bottom: 8px; font-size: 1.1rem; cursor: pointer; }
+        .ready-time { font-size: 1.4rem; font-weight: 800; color: #d32f2f; margin: 8px 0; }
+        .pulse { animation: pulse-animation 2s infinite; }
+        @keyframes pulse-animation { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        #closed-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(211,47,47,0.98); z-index: 9999; flex-direction: column; justify-content: center; align-items: center; color: white; text-align: center; padding: 20px; }
+        .member-bar { background: #fff; margin: 8px 15px 0; padding: 8px 12px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        #member-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); z-index: 8000; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; }
+        .member-card { background: #fff; width: 100%; max-width: 360px; border-radius: 16px; padding: 22px 18px; text-align: center; }
+        .member-card h2 { margin: 0 0 8px; color: #d32f2f; font-size: 1.25rem; }
+        .member-card p { color: #666; font-size: 0.9rem; margin: 0 0 14px; }
+        .member-card input { width: 100%; box-sizing: border-box; padding: 12px; margin: 6px 0; border: 2px solid #eee; border-radius: 10px; font-size: 1rem; }
+    </style>
+</head>
+<body>
+
+<div id="closed-overlay">
+    <h1 id="store-overlay-icon" style="font-size:3rem; margin:0;">🌙</h1>
+    <h2 id="store-overlay-title" style="font-size:1.5rem; margin:10px 0;">老闆休息囉！</h2>
+    <p id="store-overlay-msg">目前非營業時間，暫時無法點餐。</p>
+</div>
+
+<div class="header"><h1>小紅帽雞蛋糕</h1></div>
+<div class="member-bar">
+    <span id="member-label">尚未登記會員</span>
+    <button type="button" id="member-switch-btn" onclick="logoutMember()" style="display:none; background:none; border:none; color:#888; text-decoration:underline; font-size:0.8rem;">更換會員</button>
+</div>
+<div id="pickup-chip" onclick="reopenPickup()">查看取餐資訊</div>
+<div id="member-overlay">
+    <div class="member-card">
+        <h2>會員登記</h2>
+        <p>只需手機號碼與姓名，下次進來會自動登入。</p>
+        <input id="member-phone" type="tel" inputmode="numeric" maxlength="10" placeholder="手機號碼（09開頭）" oninput="onMemberPhoneInput()">
+        <input id="member-name" type="text" maxlength="20" placeholder="姓名">
+        <div id="member-hint" style="font-size:0.85rem; color:#2e7d32; min-height:1.2em; margin:4px 0;"></div>
+        <button type="button" class="pay-btn" style="background:#d32f2f; color:white;" onclick="saveMember()">開始點餐</button>
+    </div>
+</div>
+
+<div class="category-title">單一口味 (5顆)</div>
+<div id="single-list"></div>
+
+<div class="category-title">自由混搭 (3+2顆)</div>
+<div class="mix-box">
+    <label style="font-size:0.8rem; color:#666;">主口味 (3顆)：</label>
+    <select id="free-3btn" onchange="updateFreeMixPreview()"></select>
+    <label style="font-size:0.8rem; color:#666;">副口味 (2顆)：</label>
+    <select id="free-2btn" onchange="updateFreeMixPreview()"></select>
+    <div id="free-mix-preview" style="display:none;"></div>
+    <button onclick="addFreeMix()" style="width:100%; padding:10px; background:#FBC02D; border:none; border-radius:8px; font-weight:bold; font-size:0.95rem;">確認混搭加入購物車</button>
+</div>
+
+<div class="category-title">超值快選組合 (3+2顆)</div>
+<div class="mix-box">
+    <select id="fixed-mix-select" onchange="updateFixedMixOptions()"></select>
+    <div id="fixed-mix-config" style="display:none;">
+        <select id="fixed-3btn" onchange="showMixPreview()"></select>
+        <div id="mix-preview-text" style="display:none;"></div>
+        <button onclick="addFixedMix()" style="width:100%; padding:10px; background:#d32f2f; color:white; border:none; border-radius:8px; font-weight:bold;">確認加入 $ <span id="fixed-p">0</span></button>
+    </div>
+</div>
+
+<div id="custom-cart-list" style="margin: 10px 15px;"></div>
+
+<div class="cart-bar">
+    <div>總計：<span id="cart-total" style="font-size:1.4rem; color:#d32f2f; font-weight:bold;">$0</span></div>
+    <button class="btn-submit" onclick="showPaySelect()">送出訂單</button>
+</div>
+
+<div id="overlay" class="overlay"><div id="ticket-content" class="ticket"></div></div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, collection, addDoc, serverTimestamp, onSnapshot, doc, getDocs, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = { apiKey: "AIzaSyAbG0YttR57SQ5Xr_xPTKY1DoVgPtcnJzc", authDomain: "myordersystem-dee08.firebaseapp.com", projectId: "myordersystem-dee08", storageBucket: "myordersystem-dee08.firebasestorage.app", messagingSenderId: "775750661450", appId: "1:775750661450:web:e56f00456f0285c8bebdb3" };
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const MEMBER_KEY = 'redhood_member';
+    let currentMember = null;
+
+    function showMemberBar() {
+        const label = document.getElementById('member-label');
+        const sw = document.getElementById('member-switch-btn');
+        if (currentMember) {
+            label.innerText = `會員：${currentMember.name} ${currentMember.phone}`;
+            sw.style.display = 'inline';
+        } else {
+            label.innerText = '尚未登記會員';
+            sw.style.display = 'none';
+        }
+    }
+
+    function openMemberOverlay() {
+        document.getElementById('member-overlay').style.display = 'flex';
+        document.getElementById('member-phone').value = '';
+        document.getElementById('member-name').value = '';
+        document.getElementById('member-name').style.display = 'block';
+        document.getElementById('member-hint').innerText = '';
+    }
+
+    function closeMemberOverlay() {
+        document.getElementById('member-overlay').style.display = 'none';
+    }
+
+    function loadLocalMember() {
+        try {
+            const saved = JSON.parse(localStorage.getItem(MEMBER_KEY) || 'null');
+            if (saved && saved.phone && saved.name) {
+                currentMember = saved;
+                showMemberBar();
+                return true;
+            }
+        } catch (e) {}
+        currentMember = null;
+        showMemberBar();
+        return false;
+    }
+
+    window.onMemberPhoneInput = async () => {
+        const phone = document.getElementById('member-phone').value.replace(/\D/g, '');
+        document.getElementById('member-phone').value = phone;
+        if (phone.length !== 10) {
+            document.getElementById('member-hint').innerText = '';
+            document.getElementById('member-name').style.display = 'block';
+            return;
+        }
+        try {
+            const snap = await getDoc(doc(db, 'members', phone));
+            if (snap.exists()) {
+                const m = snap.data();
+                document.getElementById('member-name').value = m.name || '';
+                document.getElementById('member-name').style.display = 'none';
+                document.getElementById('member-hint').innerText = `歡迎回來，${m.name}`;
+            } else {
+                document.getElementById('member-name').value = '';
+                document.getElementById('member-name').style.display = 'block';
+                document.getElementById('member-hint').innerText = '新會員，請填姓名';
+            }
+        } catch (e) {
+            document.getElementById('member-hint').innerText = '';
+        }
+    };
+
+    window.saveMember = async () => {
+        const phone = document.getElementById('member-phone').value.replace(/\D/g, '');
+        let name = (document.getElementById('member-name').value || '').trim();
+        if (!/^09\d{8}$/.test(phone)) return alert('請輸入正確手機號碼（09開頭10碼）');
+        try {
+            const snap = await getDoc(doc(db, 'members', phone));
+            if (snap.exists() && snap.data().name) name = snap.data().name;
+        } catch (e) {}
+        if (!name) return alert('請輸入姓名');
+        try {
+            await setDoc(doc(db, 'members', phone), { name, phone, updatedAt: serverTimestamp() }, { merge: true });
+        } catch (e) {
+            alert('會員資料寫入失敗，請稍後再試');
+            return;
+        }
+        currentMember = { name, phone };
+        localStorage.setItem(MEMBER_KEY, JSON.stringify(currentMember));
+        showMemberBar();
+        closeMemberOverlay();
+    };
+
+    window.logoutMember = () => {
+        localStorage.removeItem(MEMBER_KEY);
+        currentMember = null;
+        showMemberBar();
+        openMemberOverlay();
+    };
+
+    if (!loadLocalMember()) openMemberOverlay();
+
+    const ORDER_KEY = 'redhood_active_order';
+    let pickupUnsub = null;
+    let keepPickupOpen = false;
+    let lastPickupStatus = '';
+
+    function hidePickupTicket() {
+        keepPickupOpen = false;
+        const overlay = document.getElementById('overlay');
+        overlay.style.display = 'none';
+        overlay.classList.remove('pickup-mode');
+    }
+
+    function clearPickup() {
+        keepPickupOpen = false;
+        lastPickupStatus = '';
+        localStorage.removeItem(ORDER_KEY);
+        document.getElementById('pickup-chip').style.display = 'none';
+        document.getElementById('pickup-chip').innerText = '查看取餐資訊';
+        const overlay = document.getElementById('overlay');
+        overlay.style.display = 'none';
+        overlay.classList.remove('pickup-mode');
+        if (pickupUnsub) { pickupUnsub(); pickupUnsub = null; }
+    }
+
+    function reopenPickup() {
+        if (!localStorage.getItem(ORDER_KEY)) return;
+        keepPickupOpen = true;
+        const overlay = document.getElementById('overlay');
+        overlay.classList.add('pickup-mode');
+        overlay.style.display = 'flex';
+    }
+
+    function pickupButtons() {
+        return `<button type="button" class="pay-btn pickup-btn-main" style="margin-top:12px;" onclick="hidePickupTicket()">好的，繼續點餐</button>`;
+    }
+
+    function renderPickupHtml(od) {
+        const no = od.orderNo;
+        if (od.status === "confirmed") {
+            const readyHtml = od.readyTime
+                ? `<p>可取餐時間</p><div class="ready-time">${od.readyTime}</div><p style="color:#666; margin:0;">約 ${od.waitMinutes || ''} 分鐘後取餐</p>`
+                : `<p>請現場等候，謝謝！</p>`;
+            return `<div class="waiting-box"><h2>✅ 老闆已接單！</h2><p>您的取餐序號</p><div class="order-num">${no}</div>${readyHtml}${pickupButtons()}</div>`;
+        }
+        return `<div class="waiting-box"><p>您的取餐序號</p><div class="order-num">${no}</div><div class="status-badge pulse">⏳ 等待老闆接單中...</div>${pickupButtons()}</div>`;
+    }
+
+    function watchPickup(orderId, openNow) {
+        if (pickupUnsub) pickupUnsub();
+        localStorage.setItem(ORDER_KEY, orderId);
+        if (openNow) keepPickupOpen = true;
+        pickupUnsub = onSnapshot(doc(db, "orders", orderId), (snap) => {
+            if (!snap.exists()) {
+                localStorage.removeItem(ORDER_KEY);
+                document.getElementById('pickup-chip').style.display = 'none';
+                document.getElementById('ticket-content').innerHTML = `<div class="waiting-box"><h2>❌ 訂單已取消</h2><p>老闆取消了您的訂單。</p><button type="button" class="pay-btn pickup-btn-sub" onclick="clearPickup()">知道了</button></div>`;
+                const overlay = document.getElementById('overlay');
+                overlay.classList.add('pickup-mode');
+                overlay.style.display = 'flex';
+                if (pickupUnsub) { pickupUnsub(); pickupUnsub = null; }
+                return;
+            }
+            const od = snap.data();
+            if (od.status === "finished") {
+                clearPickup();
+                return;
+            }
+            const chip = document.getElementById('pickup-chip');
+            chip.style.display = 'block';
+            chip.innerText = od.status === 'confirmed' && od.readyTime
+                ? `取餐 #${od.orderNo}　可取餐 ${od.readyTime}　（點此查看）`
+                : `取餐 #${od.orderNo}　等待接單中　（點此查看）`;
+            document.getElementById('ticket-content').innerHTML = renderPickupHtml(od);
+            if (openNow || keepPickupOpen || (lastPickupStatus && lastPickupStatus !== od.status)) {
+                const overlay = document.getElementById('overlay');
+                overlay.classList.add('pickup-mode');
+                overlay.style.display = 'flex';
+                keepPickupOpen = true;
+            }
+            lastPickupStatus = od.status;
+            openNow = false;
+        });
+    }
+
+    window.hidePickupTicket = hidePickupTicket;
+    window.clearPickup = clearPickup;
+    window.reopenPickup = reopenPickup;
+    const savedOrderId = localStorage.getItem(ORDER_KEY);
+    if (savedOrderId) watchPickup(savedOrderId, false);
+
+    onSnapshot(doc(db, "settings", "storeStatus"), s => {
+        const data = s.exists() ? s.data() : { isOpen: true };
+        const mode = data.mode || (data.isOpen === false ? 'closed' : 'open');
+        const overlay = document.getElementById('closed-overlay');
+        if (mode === 'open') {
+            overlay.style.display = 'none';
+            return;
+        }
+        overlay.style.display = 'flex';
+        if (mode === 'delivery') {
+            overlay.style.background = 'rgba(230,126,34,0.98)';
+            document.getElementById('store-overlay-icon').innerText = '🛵';
+            document.getElementById('store-overlay-title').innerText = '外送中！';
+            document.getElementById('store-overlay-msg').innerText = '老闆正在外送，暫時無法點餐。';
+        } else {
+            overlay.style.background = 'rgba(211,47,47,0.98)';
+            document.getElementById('store-overlay-icon').innerText = '🌙';
+            document.getElementById('store-overlay-title').innerText = '老闆休息囉！';
+            document.getElementById('store-overlay-msg').innerText = '目前非營業時間，暫時無法點餐。';
+        }
+    });
+
+    const baseMenu = [
+        { name: "古早原味", price: 40 }, { name: "爆漿奶油", price: 45 }, { name: "熔岩巧克力", price: 45 }, 
+        { name: "肉鬆沙拉", price: 45 }, { name: "黃金起司", price: 50 }, { name: "玉米起司", price: 50 }, 
+        { name: "鮪魚起司", price: 50 }, { name: "半月OREO", price: 55 }, { name: "蛋黃奶酥", price: 55 }
+    ];
+
+    const fixedMixGroup = [
+        { items: ["爆漿奶油", "熔岩巧克力"], price: 45 }, { items: ["爆漿奶油", "肉鬆沙拉"], price: 45 },
+        { items: ["肉鬆沙拉", "熔岩巧克力"], price: 45 }, { items: ["黃金起司", "玉米起司"], price: 50 },
+        { items: ["黃金起司", "鮪魚起司"], price: 50 }, { items: ["玉米起司", "鮪魚起司"], price: 50 },
+        { items: ["半月OREO", "蛋黃奶酥"], price: 55 }
+    ];
+
+    let cart = {}; let customItems = []; let soldOutList = []; let limited = { name: "", price: 0 };
+    window.currentFreeMixPrice = 0;
+
+    onSnapshot(doc(db, "settings", "menuStatus"), s => { soldOutList = s.exists() ? s.data().soldOut || [] : []; render(); });
+    onSnapshot(doc(db, "settings", "limitedEdition"), s => { if(s.exists()){ limited = s.data(); render(); }});
+
+    function render() {
+        let singleHtml = "";
+        let currentSingle = [...baseMenu];
+        if (limited.name) currentSingle.push({ name: limited.name, price: limited.price, isLtd: true });
+
+        currentSingle.forEach(item => {
+            const isSold = soldOutList.includes(item.name);
+            singleHtml += `<div class="menu-item" style="${isSold?'opacity:0.5':''}">
+                <div class="item-info"><b>${item.isLtd?'⭐':''}${item.name}</b><span>$${item.price}</span></div>
+                <div class="qty-controls">${isSold ? '<span style="color:red">售完</span>' : `<button class="btn-qty" onclick="updateQty('${item.name}',-1,${item.price})">-</button><span id="q-${item.name}">${cart[item.name]||0}</span><button class="btn-qty" onclick="updateQty('${item.name}',1,${item.price})">+</button>`}</div>
+            </div>`;
+        });
+        document.getElementById('single-list').innerHTML = singleHtml;
+
+        let mixOptions = [...baseMenu];
+        if (limited.name) mixOptions.push({ name: `⭐${limited.name}`, realName: limited.name });
+        const optionsHtml = '<option value="">請選擇</option>' + mixOptions.map(i => `<option value="${i.realName || i.name}" ${soldOutList.includes(i.realName || i.name)?'disabled':''}>${i.name}</option>`).join('');
+        document.getElementById('free-3btn').innerHTML = optionsHtml;
+        document.getElementById('free-2btn').innerHTML = optionsHtml;
+
+        let fixedOpt = '<option value="">-- 超值組合 --</option>';
+        fixedMixGroup.forEach((g, idx) => {
+            const isSold = g.items.some(n => soldOutList.includes(n));
+            fixedOpt += `<option value="${idx}" ${isSold?'disabled':''}>${g.items.join('+')} ($${g.price})</option>`;
+        });
+        document.getElementById('fixed-mix-select').innerHTML = fixedOpt;
+    }
+
+    window.updateFreeMixPreview = () => {
+        const m3 = document.getElementById('free-3btn').value;
+        const m2 = document.getElementById('free-2btn').value;
+        const pre = document.getElementById('free-mix-preview');
+        if(m3 && m2) {
+            const all = [...baseMenu]; if(limited.name) all.push(limited);
+            const p3 = all.find(i=>i.name===m3)?.price || 0;
+            const p2 = all.find(i=>i.name===m2)?.price || 0;
+            const max = Math.max(p3, p2);
+            window.currentFreeMixPrice = max;
+            pre.innerHTML = `已選：<b>${m3}(3)+${m2}(2)</b><br>計算價格：<b style="color:#d32f2f;">$${max}</b>`;
+            pre.style.display = 'block';
+        } else { pre.style.display = 'none'; }
+    };
+
+    window.addFreeMix = () => {
+        const m3 = document.getElementById('free-3btn').value;
+        const m2 = document.getElementById('free-2btn').value;
+        if(!m3 || !m2) return alert("請選好兩種口味！");
+        customItems.push({ name: `[自選]${m3}(3)+${m2}(2)`, price: window.currentFreeMixPrice });
+        document.getElementById('free-3btn').value = ""; document.getElementById('free-2btn').value = "";
+        document.getElementById('free-mix-preview').style.display = 'none'; refreshCart();
+    };
+
+    window.updateFixedMixOptions = () => {
+        const idx = document.getElementById('fixed-mix-select').value;
+        const box = document.getElementById('fixed-mix-config');
+        if(!idx) { box.style.display = 'none'; return; }
+        const group = fixedMixGroup[idx];
+        document.getElementById('fixed-p').innerText = group.price;
+        document.getElementById('fixed-3btn').innerHTML = group.items.map(n => `<option value="${n}">${n} (3顆)</option>`).join('');
+        box.style.display = 'block'; showMixPreview();
+    };
+
+    window.showMixPreview = () => {
+        const main = document.getElementById('fixed-3btn').value;
+        const idx = document.getElementById('fixed-mix-select').value;
+        const other = fixedMixGroup[idx].items.find(i => i !== main);
+        const pre = document.getElementById('mix-preview-text');
+        pre.innerHTML = `已選：<b>${main}(3顆)</b> + <b>${other}(2顆)</b>`; pre.style.display = 'block';
+    };
+
+    window.addFixedMix = () => {
+        const idx = document.getElementById('fixed-mix-select').value;
+        const main = document.getElementById('fixed-3btn').value;
+        const group = fixedMixGroup[idx];
+        const other = group.items.find(i => i !== main);
+        customItems.push({ name: `[混搭]${main}(3)+${other}(2)`, price: group.price }); refreshCart();
+    };
+
+    window.updateQty = (n, c, p) => { cart[n] = (cart[n] || 0) + c; if(cart[n] <= 0) delete cart[n]; calc(); render(); };
+    window.removeItem = (i) => { customItems.splice(i,1); refreshCart(); };
+    function refreshCart() {
+        document.getElementById('custom-cart-list').innerHTML = customItems.map((m,i)=>`<div style="display:flex;justify-content:space-between;background:#fff;padding:10px;border-radius:8px;margin-bottom:5px;border:1px solid #FBC02D;"><span>${m.name} <b>$${m.price}</b></span><span onclick="removeItem(${i})" style="color:red;font-weight:bold;">移除</span></div>`).join('');
+        calc();
+    }
+    function calc() {
+        let t = 0; const all = [...baseMenu]; if(limited.name) all.push(limited);
+        Object.keys(cart).forEach(n => { const item = all.find(i=>i.name===n); if(item) t += item.price*cart[n]; });
+        customItems.forEach(m => t += m.price); document.getElementById('cart-total').innerText = `$${t}`;
+    }
+
+    window.showPaySelect = () => {
+        if (!currentMember) { openMemberOverlay(); return alert("請先登記會員"); }
+        const totalStr = document.getElementById('cart-total').innerText;
+        if(totalStr === "$0") return alert("購物車是空的喔！");
+        let detailHtml = `<h3>最後確認餐點</h3><div style="text-align:left; background:#f9f9f9; padding:10px; border-radius:10px; margin-bottom:10px;"><table class="detail-table"><tr><th>品項</th><th style="text-align:center;">數量</th><th>金額</th></tr>`;
+        const all = [...baseMenu]; if(limited.name) all.push(limited);
+        Object.keys(cart).forEach(n => { const item = all.find(i => i.name === n); detailHtml += `<tr><td>${n}</td><td style="text-align:center;">${cart[n]}</td><td>$${item.price * cart[n]}</td></tr>`; });
+        customItems.forEach(m => { detailHtml += `<tr><td>${m.name}</td><td style="text-align:center;">1</td><td>$${m.price}</td></tr>`; });
+        detailHtml += `</table></div><input type="text" id="order-note" class="note-input" placeholder="備註...">
+            <div style="font-size:1.4rem; font-weight:bold; color:#d32f2f; margin-bottom:15px;">總計金額：${totalStr}</div>
+            <button class="pay-btn" style="background:#d32f2f; color:white;" onclick="submitOrder('${totalStr}')">✅ 確認送出</button>
+            <button style="background:none; border:none; color:#888; text-decoration:underline;" onclick="document.getElementById('overlay').style.display='none'">返回修改</button>`;
+        document.getElementById('ticket-content').innerHTML = detailHtml;
+        const overlay = document.getElementById('overlay');
+        overlay.classList.remove('pickup-mode');
+        overlay.style.display = 'flex';
+    };
+
+    window.submitOrder = async (t) => {
+        const note = document.getElementById('order-note').value || "無";
+        const ticket = document.getElementById('ticket-content');
+        ticket.innerHTML = `<div class="waiting-box"><h2 class="pulse">訂單傳送中...</h2></div>`;
+        try {
+            const qSnap = await getDocs(collection(db, "orders"));
+            const no = qSnap.size + 1;
+            let itemsArr = [];
+            Object.keys(cart).forEach(n => itemsArr.push(`${n}x${cart[n]}`));
+            customItems.forEach(ci => itemsArr.push(`${ci.name}x1`));
+            const docRef = await addDoc(collection(db, "orders"), { orderNo: no, items: itemsArr.join(', '), note: note, total: t, time: new Date().toLocaleTimeString('zh-TW', {hour12:false, hour:'2-digit', minute:'2-digit'}), timestamp: serverTimestamp(), status: "pending", memberName: currentMember.name, memberPhone: currentMember.phone });
+            cart = {}; customItems = []; refreshCart(); render();
+            watchPickup(docRef.id, true);
+        } catch (e) { alert("系統忙碌！"); }
+    };
+</script>
+</body>
+</html>

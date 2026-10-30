@@ -92,10 +92,11 @@
         snap.forEach(d => {
             const o = d.data();
             const status = o.status;
-            rev += parseInt(o.total.replace(/[^0-9]/g, "")) || 0;
-            o.items.split(', ').forEach(str => { totalQty += parseInt(str.split('x')[1]) || 1; });
+            rev += parseInt(String(o.total || '').replace(/[^0-9]/g, '')) || 0;
+            const itemStrs = (o.items || '').split(', ').filter(Boolean);
+            itemStrs.forEach(str => { totalQty += parseInt(str.split('x')[1]) || 1; });
 
-            const itemsHtml = o.items.split(', ').map(str => `<div class="item-row"><span>${str.split('x')[0]}</span><b>x${str.split('x')[1]||1}</b></div>`).join('');
+            const itemsHtml = itemStrs.map(str => `<div class="item-row"><span>${str.split('x')[0]}</span><b>x${str.split('x')[1]||1}</b></div>`).join('');
 
             const div = document.createElement('div');
             div.className = `order-card ${status}`;
@@ -140,6 +141,7 @@
         };
         ['open', 'delivery', 'closed'].forEach(m => {
             const btn = document.getElementById('store-btn-' + m);
+            if (!btn) return;
             const on = m === mode;
             btn.style.fontWeight = 'bold';
             btn.style.border = on ? '2px solid ' + styles[m].color : '1px solid #ccc';

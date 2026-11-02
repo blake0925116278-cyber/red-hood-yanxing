@@ -5,117 +5,259 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>小紅帽管理後台</title>
     <style>
-        body { font-family: -apple-system, sans-serif; background: #f0f0f0; padding: 10px; margin: 0; color: #333; }
-        .header { background: #333; color: #fff; padding: 10px; text-align: center; border-radius: 0 0 15px 15px; }
-        .dashboard { background: #fff; margin: 10px 5px; padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-top: 5px solid #FBC02D; }
-        .stat-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+        * { box-sizing: border-box; }
+        body { font-family: "PingFang TC", "Noto Sans TC", -apple-system, sans-serif; background: #efe6d8; padding: 6px; margin: 0; color: #333; }
+        .header { background: linear-gradient(180deg, #4a2c2a, #2b1816); color: #fff; padding: 8px; text-align: center; border-radius: 0 0 12px 12px; }
+        .header h3 { font-size: 0.95rem; letter-spacing: 0.08em; }
+        .dashboard { background: #fffdf8; margin: 6px 4px; padding: 8px; border-radius: 12px; box-shadow: 0 2px 8px rgba(90,40,0,0.08); border-top: 3px solid #FBC02D; }
+        .stat-row { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
         .stat-card { text-align: left; flex: 1; }
-        .stat-card span { font-size: 0.8rem; color: #666; }
-        .stat-card b { font-size: 1.2rem; color: #d32f2f; display: block; margin-top: 4px; }
-        .mode-btns { display: flex; flex-direction: column; gap: 4px; margin-top: 5px; min-width: 88px; }
-        .mode-btns button { padding: 6px 8px; border-radius: 8px; border: 1px solid #ddd; font-weight: bold; font-size: 0.8rem; width: 100%; cursor: pointer; background: #f5f5f5; color: #666; }
-        .btn-clear { background: #d32f2f; color: #fff; border: none; border-radius: 8px; padding: 8px 12px; font-size: 0.85rem; font-weight: bold; cursor: pointer; }
-        .order-card { background: #d32f2f; color: #fff; padding: 15px; margin-top: 12px; border-radius: 12px; position: relative; box-shadow: 0 4px 10px rgba(211, 47, 47, 0.3); }
-        .order-card.confirmed { background: #e67e22; }
-        .order-card.finished { background: #ffffff; color: #888; box-shadow: none; opacity: 0.6; border: 1px solid #ddd; }
-        .order-no-badge { position: absolute; right: 10px; top: 10px; background: rgba(255,255,255,0.2); color: #fff; padding: 4px 12px; border-radius: 8px; font-size: 1.4rem; font-weight: 900; border: 1px solid #fff; }
+        .stat-card span { font-size: 0.65rem; color: #666; }
+        .stat-card b { font-size: 0.95rem; color: #d32f2f; display: block; margin-top: 1px; }
+        .mode-card { flex: 0 0 auto; }
+        .mode-btns { display: flex; flex-direction: row; gap: 4px; margin-top: 3px; }
+        .mode-btns button { writing-mode: vertical-rl; text-orientation: upright; letter-spacing: 0.08em; padding: 6px 5px; min-height: 56px; border-radius: 6px; border: 1px solid #ddd; font-weight: bold; font-size: 0.72rem; cursor: pointer; background: #f5f5f5; color: #666; }
+        .btn-clear { background: #d32f2f; color: #fff; border: none; border-radius: 6px; padding: 5px 8px; font-size: 0.72rem; font-weight: bold; cursor: pointer; }
+        .order-card { background: linear-gradient(160deg, #e53935, #c62828); color: #fff; padding: 16px; margin-top: 12px; border-radius: 16px; position: relative; box-shadow: 0 8px 18px rgba(198,40,40,0.28); }
+        .order-card.confirmed { background: linear-gradient(160deg, #fb8c00, #ef6c00); box-shadow: 0 8px 18px rgba(239,108,0,0.28); }
+        .order-card.finished { background: #fff; color: #888; box-shadow: none; opacity: 0.72; border: 1px solid #e6dccf; }
+        .order-no-badge { position: absolute; right: 10px; top: 10px; background: #fff; color: #c62828; padding: 4px 12px; border-radius: 10px; font-size: 1.4rem; font-weight: 900; }
+        .finished .order-no-badge { background: #eee; color: #888; }
         .item-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.2); font-size: 1.1rem; }
         .finished .item-row { border-bottom-color: #eee; }
-        .note-box { background: #ffeb3b; color: #333; padding: 8px; border-radius: 8px; margin-top: 10px; font-weight: bold; border-left: 5px solid #333; }
-        .btn-action { border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1.1rem; }
-        .btn-confirm { background: #fff; color: #d32f2f; }
-        .ready-label { background: rgba(255,255,255,0.2); display: inline-block; padding: 4px 10px; border-radius: 8px; margin-top: 8px; font-weight: bold; }
+        .note-box { background: #fff59d; color: #333; padding: 8px 10px; border-radius: 10px; margin-top: 10px; font-weight: bold; border-left: 5px solid #f9a825; }
+        .btn-action { border: none; padding: 7px 6px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.82rem; }
+        .btn-confirm { background: #fff; color: #c62828; box-shadow: 0 2px 0 rgba(0,0,0,0.08); }
+        .btn-notify { background: #ffeb3b; color: #333; width: 100%; padding: 10px; font-size: 1rem; }
+        .ready-row { display: flex; gap: 8px; align-items: stretch; margin: 10px 0 0; }
+        .ready-label { background: rgba(255,255,255,0.22); display: flex; align-items: center; justify-content: center; padding: 8px 10px; border-radius: 8px; font-weight: bold; font-size: 1rem; flex: 1; text-align: center; white-space: nowrap; }
         .btn-finish { background: #333; color: #fff; }
-        .btn-cancel { background: rgba(0,0,0,0.2); color: #fff; border: 1px solid #fff; font-size: 0.9rem; }
-        .admin-section { background: #fff; padding: 10px; border-radius: 10px; margin: 15px 5px; border: 1px solid #ddd; }
-        .stock-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)); gap: 5px; }
-        .s-btn { padding: 8px 2px; font-size: 0.8rem; border: 1px solid #ccc; border-radius: 5px; font-weight: bold; }
+        .btn-contract { background: #c8e6c9; color: #1b5e20; padding: 8px 10px; font-size: 1rem; flex: 1; }
+        .btn-cancel { background: rgba(0,0,0,0.2); color: #fff; border: 1px solid #fff; font-size: 0.75rem; }
+        .edit-qty { display: flex; align-items: center; gap: 6px; }
+        .edit-qty button { width: 26px; height: 26px; border: none; background: #fff; color: #c62828; border-radius: 50%; font-weight: bold; }
+        .edit-add { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+        .edit-add button { border: none; background: rgba(255,255,255,0.22); color: #fff; border-radius: 6px; padding: 3px 6px; font-size: 0.72rem; }
+        .admin-section { background: #fffdf8; padding: 6px; border-radius: 10px; margin: 6px 4px; border: 1px solid #ead9c0; font-size: 0.78rem; }
+        .admin-section input { font-size: 0.75rem; }
+        .stock-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(62px, 1fr)); gap: 3px; }
+        .s-btn { padding: 4px 1px; font-size: 0.68rem; border: 1px solid #ccc; border-radius: 4px; font-weight: bold; }
         .s-btn.off { background: #ffebee; color: #d32f2f; }
         .s-btn.on { background: #e8f5e9; color: #2e7d32; }
+        .member-box { background: rgba(255,255,255,0.18); border-radius: 6px; padding: 6px 8px; margin-top: 6px; font-size: 0.8rem; }
+        .finished .member-box { background: #f5f5f5; }
+        .points-full { background: #ffeb3b; color: #333; font-weight: bold; padding: 4px 6px; border-radius: 5px; margin-top: 4px; font-size: 0.75rem; }
+        .btn-discount { background: #ffeb3b; color: #333; border: none; padding: 6px 8px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.8rem; white-space: nowrap; flex: 1; }
+        .disc-amt { width: 72px; box-sizing: border-box; padding: 5px; border-radius: 6px; border: 2px solid #333; font-size: 0.85rem; font-weight: bold; margin: 0; }
+        .disc-row { display: flex; gap: 6px; align-items: center; margin-top: 4px; }
+        .member-pts-row { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; margin-top: 4px; }
+        .member-pts-row input { padding: 3px 5px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.75rem; }
+        .btn-pts { background: #1565c0; color: #fff; border: none; border-radius: 4px; padding: 3px 8px; font-size: 0.72rem; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body onclick="initAudio()">
 
 <div class="header">
     <h3 style="margin:0;">小紅帽 訂單管理</h3>
-    <button onclick="initAudio()" id="audio-tip" style="background:#ffeb3b; border:none; padding:4px 10px; border-radius:15px; margin-top:5px; font-size:0.75rem; font-weight:bold;">🔔 開啟語音</button>
+    <button onclick="initAudio()" id="audio-tip" style="background:#ffeb3b; border:none; padding:2px 8px; border-radius:12px; margin-top:3px; font-size:0.65rem; font-weight:bold;">🔔 開啟語音</button>
 </div>
 
 <div class="dashboard">
     <div class="stat-row">
         <div class="stat-card"><span>今日營收</span><b id="total-rev">$0</b></div>
         <div class="stat-card"><span>今日總份數</span><b id="total-qty">0 份</b></div>
-        <div class="stat-card">
+        <div class="stat-card mode-card">
             <span>營業狀態</span>
-            <div id="store-mode-btns" style="display:flex; flex-direction:column; gap:4px; margin-top:5px;">
-                <button type="button" id="store-btn-open" onclick="setStoreMode('open')">🟢 營業中</button>
-                <button type="button" id="store-btn-delivery" onclick="setStoreMode('delivery')">🛵 外送中</button>
-                <button type="button" id="store-btn-closed" onclick="setStoreMode('closed')">🔴 休息中</button>
+            <div id="store-mode-btns" class="mode-btns">
+                <button type="button" id="store-btn-open" onclick="setStoreMode('open')">營業中</button>
+                <button type="button" id="store-btn-delivery" onclick="setStoreMode('delivery')">外送中</button>
+                <button type="button" id="store-btn-closed" onclick="setStoreMode('closed')">休息中</button>
             </div>
         </div>
         <button class="btn-clear" onclick="clearAllOrders()">歸零</button>
     </div>
 </div>
 
-<div id="list" style="padding:0 5px;"></div>
-
 <div class="admin-section" style="border-color:#d32f2f">
     <b>⭐ 限定口味:</b>
-    <input type="text" id="ltd-n" placeholder="名稱" style="width:80px; padding:5px;">
-    <input type="number" id="ltd-p" placeholder="價" style="width:40px; padding:5px;">
-    <button onclick="saveLtd()" style="background:#d32f2f; color:#fff; border:none; padding:5px 10px; border-radius:4px;">存</button>
+    <input type="text" id="ltd-n" placeholder="名稱" style="width:64px; padding:3px;">
+    <input type="number" id="ltd-p" placeholder="價" style="width:36px; padding:3px;">
+    <button onclick="saveLtd()" style="background:#d32f2f; color:#fff; border:none; padding:3px 8px; border-radius:4px; font-size:0.75rem;">存</button>
+</div>
+
+<div class="admin-section" style="border-color:#1565c0">
+    <b>👤 會員點數:</b>
+    <div class="member-pts-row">
+        <input type="tel" id="mem-phone" placeholder="手機09開頭" maxlength="10" style="width:110px;" oninput="lookupMemberPts()">
+        <button type="button" class="btn-pts" onclick="lookupMemberPts()">查詢</button>
+        <span id="mem-info" style="color:#555;">輸入手機查詢</span>
+        <input type="number" id="mem-pts" placeholder="點數" min="0" step="1" style="width:64px;">
+        <button type="button" class="btn-pts" onclick="saveMemberPts()">儲存點數</button>
+    </div>
 </div>
 
 <div class="admin-section">
     <div id="stock-ctrl" class="stock-grid"></div>
 </div>
 
+<div id="list" style="padding:0 5px;"></div>
+
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, collection, query, orderBy, onSnapshot, doc, setDoc, getDoc, getDocs, updateDoc, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, query, orderBy, onSnapshot, doc, setDoc, getDoc, getDocs, updateDoc, deleteDoc, writeBatch, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = { apiKey: "AIzaSyAbG0YttR57SQ5Xr_xPTKY1DoVgPtcnJzc", authDomain: "myordersystem-dee08.firebaseapp.com", projectId: "myordersystem-dee08", storageBucket: "myordersystem-dee08.firebasestorage.app", messagingSenderId: "775750661450", appId: "1:775750661450:web:e56f00456f0285c8bebdb3" };
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
     let audioReady = false; let isFirst = true; let storeMode = 'open';
+    let membersMap = {};
+    const memberRef = (phone) => doc(db, 'settings', 'member_' + phone);
+    let ordersSnap = null;
     window.initAudio = () => { if(!audioReady){ window.speechSynthesis.speak(new SpeechSynthesisUtterance("系統啟動")); audioReady=true; document.getElementById('audio-tip').innerText="✅ 語音已開啟"; }};
 
-    onSnapshot(query(collection(db, "orders"), orderBy("timestamp", "asc")), (snap) => {
-        if (!isFirst && snap.docChanges().some(c => c.type === "added")) { window.speechSynthesis.speak(new SpeechSynthesisUtterance("新訂單")); }
-        isFirst = false;
-        
+    function money(v) { return parseInt(String(v || '').replace(/[^0-9]/g, ''), 10) || 0; }
+    const baseItems = ["古早原味","爆漿奶油","熔岩巧克力","肉鬆沙拉","黃金起司","玉米起司","鮪魚起司","半月OREO","蛋黃奶酥"];
+    const PRICE = {"古早原味":40,"爆漿奶油":45,"熔岩巧克力":45,"肉鬆沙拉":45,"黃金起司":50,"玉米起司":50,"鮪魚起司":50,"半月OREO":55,"蛋黃奶酥":55};
+    let curLtd = ""; let curLtdPrice = 0; const pendingEdits = {};
+    function parseItems(str) {
+        return (str || '').split(', ').filter(Boolean).map(s => {
+            const i = s.lastIndexOf('x');
+            if (i < 0) return { name: s, qty: 1 };
+            const q = parseInt(s.slice(i + 1), 10);
+            return { name: s.slice(0, i), qty: Number.isFinite(q) ? q : 1 };
+        });
+    }
+    function unitPrice(name) {
+        if (PRICE[name] != null) return PRICE[name];
+        if (curLtd && name === curLtd) return curLtdPrice || 40;
+        const m = String(name).match(/\[(?:自選|混搭)\](.+?)\(3\)\+(.+?)\(2\)/);
+        if (m) return Math.max(unitPrice(m[1]), unitPrice(m[2]));
+        return 40;
+    }
+    function getDraft(id, o) {
+        const src = (o.editProposed && o.proposedItems) ? o.proposedItems : (o.items || '');
+        const stamp = (o.editAt || '') + '|' + (o.editProposed ? 1 : 0) + '|' + (o.customerRevised ? 1 : 0) + '|' + (o.items || '');
+        if (!pendingEdits[id] || pendingEdits[id].stamp !== stamp) {
+            pendingEdits[id] = { items: parseItems(src), oldItems: o.items || '', stamp };
+        }
+        return pendingEdits[id];
+    }
+    function sumItems(items) {
+        let t = 0, q = 0;
+        items.forEach(it => { t += unitPrice(it.name) * it.qty; q += it.qty; });
+        return { t, q };
+    }
+    function itemsStr(items) {
+        return items.filter(it => it.qty > 0).map(it => `${it.name}x${it.qty}`).join(', ');
+    }
+    function shortageNames(oldStr, newItems) {
+        const next = {};
+        newItems.forEach(it => { next[it.name] = it.qty; });
+        const names = [];
+        parseItems(oldStr).forEach(it => {
+            if ((next[it.name] || 0) < it.qty && !names.includes(it.name)) names.push(it.name);
+        });
+        return names;
+    }
+    function flavorsOf(name) {
+        const mix = String(name).match(/\[(?:自選|混搭)\](.+?)\(3\)\+(.+?)\(2\)/);
+        return mix ? [mix[1], mix[2]] : [name];
+    }
+    async function markMenuSoldOut(names) {
+        const flavors = [];
+        names.forEach(n => flavorsOf(n).forEach(f => {
+            if ((baseItems.includes(f) || (curLtd && f === curLtd)) && !flavors.includes(f)) flavors.push(f);
+        }));
+        if (!flavors.length) return;
+        let cur = window.curSold;
+        if (!Array.isArray(cur)) {
+            const s = await getDoc(doc(db, 'settings', 'menuStatus'));
+            cur = s.exists() ? (s.data().soldOut || []) : [];
+        }
+        const next = [...cur];
+        flavors.forEach(f => { if (!next.includes(f)) next.push(f); });
+        if (next.length === cur.length) return;
+        await setDoc(doc(db, 'settings', 'menuStatus'), { soldOut: next });
+    }
+    function origQtyOf(ed, name) {
+        const hit = parseItems(ed.oldItems).find(x => x.name === name);
+        return hit ? hit.qty : 0;
+    }
+    window.editQty = (id, i, d) => {
+        const ed = pendingEdits[id]; if (!ed || !ed.items[i]) return;
+        const max = origQtyOf(ed, ed.items[i].name);
+        const next = ed.items[i].qty + d;
+        if (next < 0 || next > max) return;
+        ed.items[i].qty = next;
+        renderOrders();
+    };
+
+    function renderOrders() {
+        if (!ordersSnap) return;
         const list = document.getElementById('list');
         let rev = 0; let totalQty = 0;
         list.innerHTML = "";
-        
-        snap.forEach(d => {
+        const orderDocs = [];
+        ordersSnap.forEach(d => orderDocs.push(d));
+        orderDocs.reverse().forEach(d => {
             const o = d.data();
             const status = o.status;
-            rev += parseInt(String(o.total || '').replace(/[^0-9]/g, '')) || 0;
-            const itemStrs = (o.items || '').split(', ').filter(Boolean);
-            itemStrs.forEach(str => { totalQty += parseInt(str.split('x')[1]) || 1; });
-
-            const itemsHtml = itemStrs.map(str => `<div class="item-row"><span>${str.split('x')[0]}</span><b>x${str.split('x')[1]||1}</b></div>`).join('');
-
+            rev += money(o.total);
+            const ed = getDraft(d.id, o);
+            const rows = status === 'pending' ? ed.items : parseItems(o.items);
+            let qty = 0;
+            rows.forEach(it => { qty += it.qty; totalQty += it.qty; });
+            const liveItems = status === 'pending' ? itemsStr(rows) : (o.items || '');
+            const needNotify = status === 'pending' && liveItems !== (o.items || '') && liveItems !== (o.proposedItems || '');
+            const itemsHtml = status === 'pending'
+                ? rows.map((it, i) => `<div class="item-row"><span>${it.name}</span><span class="edit-qty"><button type="button" onclick="editQty('${d.id}',${i},-1)">-</button><b>x${it.qty}</b>${it.qty < origQtyOf(ed, it.name) ? `<button type="button" onclick="editQty('${d.id}',${i},1)">+</button>` : ''}</span></div>`).join('')
+                : rows.map(it => `<div class="item-row"><span>${it.name}</span><b>x${it.qty}</b></div>`).join('');
+            const mem = o.memberPhone ? membersMap[o.memberPhone] : null;
+            const storedPts = mem ? (mem.points || 0) : (o.memberPoints || 0);
+            const thisOrderPts = o.pointsEarned || 0;
+            const ptsBefore = o.pointsAdded ? Math.max(0, storedPts - thisOrderPts) : storedPts;
+            const orderAmt = money(o.originalTotal || o.total);
+            const maxOff = Math.min(Math.floor(ptsBefore / 10) * 40, orderAmt);
+            const canDiscount = o.memberPhone && !o.discounted && !o.contractPrice && maxOff >= 40 && status === 'confirmed';
+            const earnTxt = o.contractPrice ? '出餐後 +0 點' : (o.pointsAdded ? `已加 ${thisOrderPts} 點` : `出餐後 +${thisOrderPts} 點`);
+            let memberHtml = '';
+            if (o.memberName || o.memberPhone) {
+                const pointsLine = `目前點數：<b>${ptsBefore}</b>　${earnTxt}${o.memberPhone ? ` <button type="button" class="btn-pts" onclick="fillMemberPts('${o.memberPhone}')">改點數</button>` : ''}`;
+                const extra = status === 'confirmed' ? `
+                    ${o.contractPrice ? `<div>特約價 每份 -$5（${o.contractQty || ''} 份，共折 $${o.contractOff || 0}），不積點</div>` : ''}
+                    ${o.discounted ? `<div>已折價 $${o.discount || 40}（扣 ${o.discountPts || 10} 點）</div>` : ''}
+                    ${canDiscount ? `<div class="points-full">可折最多 $${maxOff}（每 10 點折 $40）</div>
+                        <div class="disc-row">
+                            <input class="disc-amt" id="disc-${d.id}" type="number" min="40" step="40" max="${maxOff}" value="${maxOff}" placeholder="折多少">
+                            <button type="button" class="btn-discount" onclick="redeemDiscount('${d.id}', '${o.memberPhone}')">確認折價</button>
+                        </div>` : ''}
+                ` : (o.contractPrice ? `<div>特約價 每份 -$5，不積點</div>` : (o.discounted ? `<div>已折價 $${o.discount || 40}</div>` : ''));
+                memberHtml = `<div class="member-box">👤 ${o.memberName || ''} ${o.memberPhone || ''}<br>${pointsLine}${extra}</div>`;
+            }
             const div = document.createElement('div');
             div.className = `order-card ${status}`;
             div.innerHTML = `
-                <div class="order-no-badge">#${o.orderNo}</div>
-                <div style="font-size:0.85rem; opacity:0.8;">${o.time}${o.memberName ? `　👤 ${o.memberName} ${o.memberPhone || ''}` : ''}</div>
+                <div class="order-no-badge">${o.orderNo}</div>
+                <div style="font-size:0.85rem; opacity:0.8;">${o.time || ''}</div>
                 <div style="margin:10px 0;">${itemsHtml}</div>
+                ${memberHtml}
+                ${o.editProposed ? `<div class="note-box">已通知客人：${o.soldOutItems || '部分品項'}已完售，等待同意、更改品項或取消<br>原：${o.items}<br>改：${o.proposedItems}　${o.proposedTotal}</div>` : (o.customerRevised ? `<div class="note-box">客人已更改品項，請確認後接單</div>` : '')}
                 ${o.note && o.note !== "無" ? `<div class="note-box">備註：${o.note}</div>` : ''}
-                ${status === 'confirmed' && o.readyTime ? `<div class="ready-label">可取餐 ${o.readyTime}（${o.waitMinutes}分鐘）</div>` : ''}
-                
+                ${status === 'confirmed' ? `<div class="ready-row">${o.readyTime ? `<div class="ready-label">可取餐 ${o.readyTime}（${o.waitMinutes}分鐘）</div>` : ''}${!o.contractPrice && !o.discounted ? `<button class="btn-action btn-contract" onclick="applyContract('${d.id}')">特約價 每份 -$5</button>` : ''}</div>` : ''}
                 <div style="margin-top:15px; display:flex; justify-content:space-between; align-items:flex-end; gap:8px;">
-                    <b style="font-size:1.5rem;">${o.total}</b>
+                    <b style="font-size:1.5rem; line-height:1.15;">${status === 'pending' ? '$' + sumItems(rows).t : o.total}　${qty} 份${o.discounted ? `<div style="font-size:0.75rem; font-weight:normal;">已折 $${o.discount || 40}</div>` : ''}</b>
                     <div style="flex:1; display:flex; flex-direction:column; gap:8px;">
                         ${status === 'pending' ? `
-                            <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                                <button class="btn-action btn-confirm" style="flex:1;" onclick="confirmOrder('${d.id}', 5)">接單 5分鐘</button>
-                                <button class="btn-action btn-confirm" style="flex:1;" onclick="confirmOrder('${d.id}', 10)">接單 10分鐘</button>
-                                <button class="btn-action btn-confirm" style="flex:1;" onclick="confirmOrder('${d.id}', 15)">接單 15分鐘</button>
-                            </div>
+                            ${needNotify ? `<button class="btn-action btn-notify" onclick="notifyCustomer('${d.id}')">通知客人</button>` : ''}
+                            ${!o.editProposed && !needNotify ? `<div style="display:flex; gap:8px; flex-wrap:wrap;">
+                                <button class="btn-action btn-confirm" style="flex:1;" onclick="confirmOrder('${d.id}', 5)">5分鐘</button>
+                                <button class="btn-action btn-confirm" style="flex:1;" onclick="confirmOrder('${d.id}', 10)">10分鐘</button>
+                                <button class="btn-action btn-confirm" style="flex:1;" onclick="confirmOrder('${d.id}', 15)">15分鐘</button>
+                                <button class="btn-action btn-confirm" style="flex:1;" onclick="confirmOrder('${d.id}', 20)">20分鐘</button>
+                                <button class="btn-action btn-confirm" style="flex:1;" onclick="confirmOrder('${d.id}', 25)">25分鐘</button>
+                                <button class="btn-action btn-confirm" style="flex:1;" onclick="confirmOrder('${d.id}', 30)">30分鐘</button>
+                            </div>` : ''}
                             <button class="btn-action btn-cancel" onclick="deleteOrder('${d.id}')">取消</button>
                         ` : ''}
                         ${status === 'confirmed' ? `
@@ -131,6 +273,27 @@
         });
         document.getElementById('total-rev').innerText = `$${rev}`;
         document.getElementById('total-qty').innerText = `${totalQty} 份`;
+    }
+
+    async function loadMembersThenRender() {
+        if (!ordersSnap) return;
+        const phones = new Set();
+        ordersSnap.forEach(d => { const p = d.data().memberPhone; if (p) phones.add(p); });
+        await Promise.all([...phones].map(async p => {
+            try {
+                const s = await getDoc(memberRef(p));
+                membersMap[p] = s.exists() ? s.data() : { points: 0, phone: p };
+            } catch (e) {
+                if (!membersMap[p]) membersMap[p] = { points: 0, phone: p };
+            }
+        }));
+        renderOrders();
+    }
+    onSnapshot(query(collection(db, "orders"), orderBy("timestamp", "asc")), (snap) => {
+        if (!isFirst && snap.docChanges().some(c => c.type === "added")) { window.speechSynthesis.speak(new SpeechSynthesisUtterance("新訂單")); }
+        isFirst = false;
+        ordersSnap = snap;
+        loadMembersThenRender();
     });
 
     function paintStoreMode(mode) {
@@ -147,10 +310,7 @@
             btn.style.border = on ? '2px solid ' + styles[m].color : '1px solid #ccc';
             btn.style.background = on ? styles[m].bg : '#fff';
             btn.style.color = on ? styles[m].color : '#666';
-            btn.style.borderRadius = '8px';
-            btn.style.padding = '6px';
-            btn.style.cursor = 'pointer';
-            btn.style.fontSize = '0.85rem';
+            btn.style.borderRadius = '5px';
         });
     }
 
@@ -163,26 +323,262 @@
     window.setStoreMode = async (mode) => {
         await setDoc(doc(db, "settings", "storeStatus"), { isOpen: mode === 'open', mode: mode });
     };
-    window.updateStatus = async (id, s) => { await updateDoc(doc(db, 'orders', id), { status: s }); };
-    window.confirmOrder = async (id, minutes) => {
-        const ready = new Date(Date.now() + minutes * 60000);
-        const readyTime = ready.toLocaleTimeString('zh-TW', { hour12: false, hour: '2-digit', minute: '2-digit' });
-        await updateDoc(doc(db, 'orders', id), { status: 'confirmed', waitMinutes: minutes, readyTime: readyTime });
+    function itemQty(o) {
+        return (o.items || '').split(', ').filter(Boolean).reduce((n, s) => n + (parseInt(s.split('x')[1], 10) || 1), 0);
+    }
+    async function restoreMemberPoints(o) {
+        if (!o.memberPhone) return;
+        let delta = 0;
+        if (o.pointsAdded) delta -= (o.pointsEarned || 0);
+        if (o.discounted) delta += (o.discountPts || 10);
+        if (delta === 0) return;
+        await setDoc(memberRef(o.memberPhone), { points: increment(delta) }, { merge: true });
+        const after = await getDoc(memberRef(o.memberPhone));
+        membersMap[o.memberPhone] = after.exists() ? after.data() : { points: 0 };
+    }
+    window.updateStatus = async (id, s) => {
+        const oref = doc(db, 'orders', id);
+        const os = await getDoc(oref);
+        if (!os.exists()) return;
+        const o = os.data();
+        if (s === 'pending') {
+            await restoreMemberPoints(o);
+            const patch = {
+                status: 'pending',
+                pointsAdded: false,
+                discounted: false,
+                discount: 0,
+                discountPts: 0,
+                contractPrice: false,
+                contractOff: 0,
+                pointsEarned: o.contractPrice ? itemQty(o) : (o.pointsEarned || 0),
+                edited: false,
+                editProposed: false,
+                editRejected: false,
+                editAgreed: false,
+                customerRevised: false,
+                proposedItems: '',
+                proposedTotal: '',
+                proposedQty: 0,
+                proposedMinutes: 0,
+                soldOutItems: ''
+            };
+            if (o.originalTotal) patch.total = o.originalTotal;
+            await updateDoc(oref, patch);
+            return;
+        }
+        if (s !== 'finished') {
+            await updateDoc(oref, { status: s });
+            return;
+        }
+        const patch = { status: 'finished' };
+        if (o.memberPhone && !o.pointsAdded && !o.contractPrice) {
+            patch.memberPoints = await addOrderPoints(o);
+            patch.pointsAdded = true;
+        } else if (o.contractPrice && !o.pointsAdded) {
+            patch.pointsAdded = true;
+            patch.pointsEarned = 0;
+        }
+        await updateDoc(oref, patch);
     };
-    window.deleteOrder = async (id) => { if(confirm("確定要取消這筆訂單嗎？")) await deleteDoc(doc(db, "orders", id)); };
+    async function addOrderPoints(o) {
+        if (!o.memberPhone || o.pointsAdded || o.contractPrice) return;
+        const mref = memberRef(o.memberPhone);
+        await setDoc(mref, { name: o.memberName || '', phone: o.memberPhone, points: increment(o.pointsEarned || 0) }, { merge: true });
+        const ms = await getDoc(mref);
+        membersMap[o.memberPhone] = ms.exists() ? ms.data() : { points: o.pointsEarned || 0 };
+        return ms.exists() ? (ms.data().points || 0) : (o.pointsEarned || 0);
+    }
+    window.notifyCustomer = async (id) => {
+        try {
+            const oref = doc(db, 'orders', id);
+            const os = await getDoc(oref);
+            if (!os.exists()) return;
+            const o = os.data();
+            const ed = getDraft(id, o);
+            const { t, q } = sumItems(ed.items);
+            if (!q) return alert('至少要有一份');
+            const items = itemsStr(ed.items);
+            if (items === (o.items || '')) return;
+            const soldNames = shortageNames(o.items || '', ed.items);
+            let pay = t;
+            if (o.contractPrice) pay = Math.max(0, t - q * 5);
+            if (o.discounted) pay = Math.max(0, pay - (o.discount || 0));
+            await updateDoc(oref, {
+                editProposed: true,
+                editRejected: false,
+                edited: false,
+                editAgreed: false,
+                customerRevised: false,
+                proposedItems: items,
+                proposedTotal: '$' + pay,
+                proposedQty: q,
+                proposedMinutes: 0,
+                soldOutItems: soldNames.join('、'),
+                editAt: Date.now()
+            });
+            await markMenuSoldOut(soldNames);
+            delete pendingEdits[id];
+            alert('已通知客人');
+        } catch (e) {
+            alert('通知失敗，請再試一次');
+        }
+    };
+    window.confirmOrder = async (id, minutes) => {
+        try {
+            const oref = doc(db, 'orders', id);
+            const os = await getDoc(oref);
+            if (!os.exists()) return;
+            const o = os.data();
+            const ed = getDraft(id, o);
+            const { t, q } = sumItems(ed.items);
+            if (!q) return alert('至少要有一份');
+            const items = itemsStr(ed.items);
+            if (o.editProposed) return alert('請等客人回覆後再接單');
+            if (items !== (o.items || '')) return alert('請先按「通知客人」');
+            let pay = t;
+            if (o.contractPrice) pay = Math.max(0, t - q * 5);
+            if (o.discounted) pay = Math.max(0, pay - (o.discount || 0));
+            const ready = new Date(Date.now() + minutes * 60000);
+            const readyTime = ready.toLocaleTimeString('zh-TW', { hour12: false, hour: '2-digit', minute: '2-digit' });
+            const patch = { status: 'confirmed', waitMinutes: minutes, readyTime, items, originalTotal: '$' + t, total: '$' + pay, pointsEarned: o.contractPrice ? 0 : q, editProposed: false, editRejected: false, customerRevised: false, soldOutItems: '' };
+            if (o.contractPrice) { patch.contractQty = q; patch.contractOff = q * 5; }
+            await updateDoc(oref, patch);
+            delete pendingEdits[id];
+        } catch (e) {
+            alert('接單失敗，請再試一次');
+        }
+    };
+    function orderQty(o) {
+        return (o.items || '').split(', ').filter(Boolean).reduce((n, s) => n + (parseInt(s.split('x')[1], 10) || 1), 0);
+    }
+    window.applyContract = async (id) => {
+        const oref = doc(db, 'orders', id);
+        const os = await getDoc(oref);
+        if (!os.exists()) return;
+        const o = os.data();
+        if (o.contractPrice) return alert('已套用特約價');
+        if (o.discounted) return alert('已折點數，不可再套特約價');
+        const qty = orderQty(o);
+        const off = qty * 5;
+        if (!confirm(`客人已出示特約證件？每份折 $5，共 ${qty} 份，折 $${off}。本單不積點。`)) return;
+        try {
+            if (o.memberPhone && o.pointsAdded && (o.pointsEarned || 0) > 0) {
+                await setDoc(memberRef(o.memberPhone), { points: increment(-(o.pointsEarned || 0)) }, { merge: true });
+                const after = await getDoc(memberRef(o.memberPhone));
+                membersMap[o.memberPhone] = after.exists() ? after.data() : { points: 0 };
+            }
+            const newTotal = Math.max(0, money(o.total) - off);
+            await updateDoc(oref, {
+                contractPrice: true,
+                contractQty: qty,
+                contractOff: off,
+                originalTotal: o.originalTotal || o.total,
+                total: '$' + newTotal,
+                pointsEarned: 0,
+                pointsAdded: true
+            });
+        } catch (e) {
+            alert('套用特約價失敗，請再試一次');
+        }
+    };
+    window.redeemDiscount = async (orderId, phone) => {
+        const inp = document.getElementById('disc-' + orderId);
+        const amount = parseInt(inp && inp.value, 10) || 0;
+        if (amount < 40 || amount % 40 !== 0) return alert('折價須為 $40 的倍數');
+        const usePts = (amount / 40) * 10;
+        if (!confirm(`確認這位客人折價 $${amount}？將扣除 ${usePts} 點。`)) return;
+        try {
+            const mref = memberRef(phone);
+            const oref = doc(db, 'orders', orderId);
+            const os = await getDoc(oref);
+            if (!os.exists()) return alert('找不到訂單');
+            const o = os.data();
+            if (o.discounted) return alert('這筆已折過價');
+            if (o.contractPrice) return alert('特約價訂單不可折點數');
+            const ms = await getDoc(mref);
+            const pts = ms.exists() ? (ms.data().points || 0) : 0;
+            const ptsBefore = o.pointsAdded ? Math.max(0, pts - (o.pointsEarned || 0)) : pts;
+            const maxOff = Math.min(Math.floor(ptsBefore / 10) * 40, money(o.originalTotal || o.total));
+            if (amount > maxOff) return alert(`最多可折 $${maxOff}`);
+            const newTotal = Math.max(0, money(o.total) - amount);
+            await setDoc(mref, { points: increment(-usePts) }, { merge: true });
+            const after = await getDoc(mref);
+            membersMap[phone] = after.exists() ? after.data() : { points: pts - usePts };
+            await updateDoc(oref, { total: '$' + newTotal, originalTotal: o.originalTotal || o.total, discounted: true, discount: amount, discountPts: usePts, memberPoints: pts - usePts });
+        } catch (e) {
+            alert('折價失敗，請再試一次');
+        }
+    };
+    window.deleteOrder = async (id) => {
+        if (!confirm("確定要取消這筆訂單嗎？")) return;
+        const os = await getDoc(doc(db, 'orders', id));
+        if (os.exists()) {
+            const o = os.data();
+            if (o.memberPhone) await restoreMemberPoints(o);
+        }
+        await deleteDoc(doc(db, 'orders', id));
+    };
     window.clearAllOrders = async () => { if(confirm("確定歸零嗎？")){ const q = await getDocs(collection(db, "orders")); const b = writeBatch(db); q.forEach(d=>b.delete(d.ref)); await b.commit(); }};
 
-    const baseItems = ["古早原味","爆漿奶油","熔岩巧克力","肉鬆沙拉","黃金起司","玉米起司","鮪魚起司","半月OREO","蛋黃奶酥"];
-    let curLtd = "";
     function updateStockUI(sList) {
         let all = [...baseItems]; if(curLtd) all.push(curLtd);
         document.getElementById('stock-ctrl').innerHTML = all.map(n => `<button class="s-btn ${sList.includes(n)?'off':'on'}" onclick="toggleSold('${n}',${sList.includes(n)})">${n}</button>`).join('');
         window.curSold = sList;
     }
     onSnapshot(doc(db, "settings", "menuStatus"), s => updateStockUI(s.exists() ? s.data().soldOut || [] : []));
-    onSnapshot(doc(db, "settings", "limitedEdition"), s => { if(s.exists()){ curLtd = s.data().name; getDoc(doc(db, "settings", "menuStatus")).then(ss => updateStockUI(ss.exists() ? ss.data().soldOut || [] : [])); }});
+    onSnapshot(doc(db, "settings", "limitedEdition"), s => { if(s.exists()){ curLtd = s.data().name; curLtdPrice = Number(s.data().price)||0; getDoc(doc(db, "settings", "menuStatus")).then(ss => updateStockUI(ss.exists() ? ss.data().soldOut || [] : [])); }});
     window.toggleSold = async (n, isS) => { await setDoc(doc(db, "settings", "menuStatus"), { soldOut: isS ? window.curSold.filter(i=>i!==n) : [...window.curSold, n] }); };
     window.saveLtd = async () => { await setDoc(doc(db, "settings", "limitedEdition"), { name: document.getElementById('ltd-n').value, price: Number(document.getElementById('ltd-p').value) }); alert("OK"); };
+
+    window.fillMemberPts = (phone) => {
+        document.getElementById('mem-phone').value = phone || '';
+        lookupMemberPts();
+        document.getElementById('mem-phone').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        document.getElementById('mem-pts').focus();
+    };
+    window.lookupMemberPts = async () => {
+        const phone = (document.getElementById('mem-phone').value || '').replace(/\D/g, '');
+        const info = document.getElementById('mem-info');
+        const ptsEl = document.getElementById('mem-pts');
+        if (!/^09\d{8}$/.test(phone)) {
+            info.innerText = phone ? '手機需 09 開頭 10 碼' : '輸入手機查詢';
+            ptsEl.value = '';
+            return;
+        }
+        try {
+            const s = await getDoc(memberRef(phone));
+            if (!s.exists()) {
+                info.innerText = '找不到此會員';
+                ptsEl.value = '';
+                return;
+            }
+            const m = s.data();
+            membersMap[phone] = m;
+            info.innerText = `${m.name || ''}　目前 ${m.points || 0} 點`;
+            ptsEl.value = m.points || 0;
+        } catch (e) {
+            info.innerText = '查詢失敗';
+        }
+    };
+    window.saveMemberPts = async () => {
+        const phone = (document.getElementById('mem-phone').value || '').replace(/\D/g, '');
+        const pts = Math.max(0, parseInt(document.getElementById('mem-pts').value, 10) || 0);
+        if (!/^09\d{8}$/.test(phone)) return alert('請輸入正確手機號碼（09開頭10碼）');
+        try {
+            const mref = memberRef(phone);
+            const s = await getDoc(mref);
+            if (!s.exists()) return alert('找不到此會員，請先請客人登記');
+            const m = s.data();
+            await setDoc(mref, { name: m.name || '', phone, points: pts }, { merge: true });
+            membersMap[phone] = { ...m, points: pts };
+            document.getElementById('mem-info').innerText = `${m.name || ''}　已改為 ${pts} 點`;
+            if (ordersSnap) renderOrders();
+            alert(`已將 ${m.name || phone} 點數改為 ${pts}`);
+        } catch (e) {
+            alert('儲存失敗，請再試一次');
+        }
+    };
 </script>
 </body>
 </html>

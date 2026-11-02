@@ -5,29 +5,34 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>小紅帽雞蛋糕點餐</title>
     <style>
-        body { font-family: -apple-system, sans-serif; background: #FFF9E1; margin: 0; padding-bottom: 100px; }
-        
-        /* 極簡化標頭 */
-        .header { background: #d32f2f; color: white; padding: 6px 0; text-align: center; }
-        .header h1 { margin: 0; font-size: 1.2rem; letter-spacing: 1px; }
-        
-        .category-title { background: #FBC02D; display: inline-block; padding: 4px 12px; border-radius: 20px; font-weight: bold; margin: 10px 15px 5px; font-size: 0.85rem; }
-        .menu-item { background: white; margin: 4px 15px; padding: 10px 12px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        * { box-sizing: border-box; }
+        body { font-family: "PingFang TC", "Noto Sans TC", -apple-system, sans-serif; background: linear-gradient(180deg, #fff7dc 0%, #ffe7c4 55%, #fff1d6 100%); margin: 0; padding-bottom: 108px; color: #3a2418; }
+        button { cursor: pointer; }
+        .header { background: linear-gradient(180deg, #ef5350, #c62828); color: white; padding: 14px 0 12px; text-align: center; box-shadow: 0 6px 16px rgba(198,40,40,0.28); }
+        .header h1 { margin: 0; font-size: 1.28rem; letter-spacing: 0.18em; font-weight: 800; }
+        .category-title { background: linear-gradient(180deg, #ffe082, #f9a825); color: #5d3a00; display: inline-block; padding: 5px 14px; border-radius: 999px; font-weight: 800; margin: 14px 15px 8px; font-size: 0.85rem; box-shadow: 0 2px 0 rgba(183,110,0,0.18); }
+        .menu-item { background: #fff; margin: 6px 15px; padding: 12px; border-radius: 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; box-shadow: 0 3px 10px rgba(90,40,0,0.07); border: 1px solid rgba(251,192,45,0.35); }
         .item-info b { font-size: 1.05rem; }
-        .item-info span { color: #d32f2f; font-weight: bold; margin-left: 6px; }
+        .item-info span { color: #c62828; font-weight: 800; margin-left: 6px; }
         .qty-controls { display: flex; align-items: center; gap: 10px; }
-        .btn-qty { width: 28px; height: 28px; border-radius: 50%; border: 1px solid #ccc; background: #fff; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; }
-        
-        .mix-box { background: #fff; margin: 5px 15px; padding: 10px 12px; border-radius: 12px; border: 2px solid #FBC02D; }
-        select { width: 100%; padding: 8px; border-radius: 8px; margin: 4px 0 6px; background: #fff; border: 1px solid #ddd; font-size: 0.95rem; -webkit-appearance: none; }
-        #mix-preview-text, #free-mix-preview { margin: 5px 0 8px; padding: 8px; background: #fff9e1; border: 1px dashed #FBC02D; border-radius: 8px; font-size: 0.85rem; color: #444; text-align: center; }
-        
-        .cart-bar { position: fixed; bottom: 0; width: 100%; background: white; padding: 10px 15px; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; z-index: 99; }
-        .btn-submit { background: #d32f2f; color: white; padding: 8px 18px; border-radius: 20px; border: none; font-weight: bold; font-size: 1rem; cursor: pointer; }
+        .btn-qty { width: 30px; height: 30px; border-radius: 50%; border: 1.5px solid #f0b429; background: #fffdf6; font-size: 1.15rem; display: flex; align-items: center; justify-content: center; color: #c62828; font-weight: 700; }
+        .add-cart-btn, .mix-add { width: 100%; padding: 11px; background: linear-gradient(180deg, #ffd54f, #f9a825); border: none; border-radius: 12px; font-weight: 800; font-size: 0.95rem; color: #5d3a00; box-shadow: 0 3px 0 #e69500; }
+        .mix-add-red { background: linear-gradient(180deg, #ef5350, #c62828); color: #fff; box-shadow: 0 3px 0 #8e0000; }
+        .mix-box { background: #fff; margin: 6px 15px; padding: 12px; border-radius: 14px; border: 1.5px solid #f0b429; box-shadow: 0 3px 10px rgba(90,40,0,0.06); }
+        select { width: 100%; padding: 10px; border-radius: 10px; margin: 4px 0 8px; background: #fffdf6; border: 1.5px solid #f0d48a; font-size: 0.95rem; -webkit-appearance: none; }
+        #mix-preview-text, #free-mix-preview { margin: 5px 0 8px; padding: 8px; background: #fff8e1; border: 1px dashed #f0b429; border-radius: 10px; font-size: 0.85rem; color: #5d3a00; text-align: center; }
+        .cart-row { display: flex; justify-content: space-between; background: #fff8e8; padding: 11px 12px; border-radius: 12px; margin-bottom: 6px; border: 1.5px solid #f0b429; }
+        .cart-empty { color: #888; font-weight: 600; }
+        .cart-bar { position: fixed; bottom: 0; width: 100%; background: rgba(255,255,255,0.96); padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); box-shadow: 0 -8px 24px rgba(90,40,0,0.12); display: flex; justify-content: space-between; align-items: center; gap: 8px; z-index: 200; border-top: 3px solid #c62828; }
+        .btn-cart { background: linear-gradient(180deg, #ffd54f, #f9a825); color: #5d3a00; padding: 10px 16px; border-radius: 999px; border: none; font-weight: 800; font-size: 1rem; box-shadow: 0 3px 0 #e69500; white-space: nowrap; }
+        .btn-submit { background: linear-gradient(180deg, #ef5350, #c62828); color: white; padding: 10px 20px; border-radius: 999px; border: none; font-weight: 800; font-size: 1rem; box-shadow: 0 3px 0 #8e0000; white-space: nowrap; }
+        #cart-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 8000; justify-content: center; align-items: center; padding: 20px; }
+        .cart-panel { background: #fffdf6; width: 100%; max-width: 400px; border-radius: 18px; padding: 18px 16px; max-height: 80vh; overflow-y: auto; box-shadow: 0 10px 28px rgba(90,40,0,0.2); }
+        .cart-panel h3 { margin: 0 0 12px; color: #c62828; text-align: center; }
         
         /* 彈窗與工單樣式維持不變 */
         .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 10000; }
-        #pickup-chip { display: none; background: #c62828; color: #fff; margin: 8px 15px 0; padding: 10px 12px; border-radius: 10px; font-weight: bold; text-align: center; box-shadow: 0 4px 12px rgba(198,40,40,0.45); cursor: pointer; border: 2px solid #ff8a80; }
+        #pickup-chip { display: none; position: relative; z-index: 10001; background: linear-gradient(180deg, #ef5350, #c62828); color: #fff; margin: 10px 15px 0; padding: 12px; border-radius: 14px; font-weight: 800; text-align: center; box-shadow: 0 6px 16px rgba(198,40,40,0.35); cursor: pointer; border: 2px solid #ffcdd2; }
         .overlay.pickup-mode { background: rgba(80, 0, 0, 0.78); }
         .overlay.pickup-mode .ticket { background: #fff5f5; color: #7f0000; border: 3px solid #e53935; }
         .overlay.pickup-mode .order-num { color: #c62828; border-color: #e53935; background: #ffcdd2; }
@@ -35,6 +40,7 @@
         .overlay.pickup-mode h2 { color: #c62828 !important; }
         .pickup-btn-main { background: #e53935 !important; color: #fff !important; }
         .pickup-btn-sub { background: #8e0000 !important; color: #fff !important; }
+        .pickup-btn-cancel { background: #5d4037 !important; color: #fff !important; }
         .ticket { background: white; width: 90%; max-width: 400px; padding: 20px; border-radius: 20px; text-align: center; box-sizing: border-box; max-height: 90vh; overflow-y: auto; }
         .order-num { font-size: 4rem; font-weight: 900; margin: 15px 0; color: #d32f2f; border: 4px solid #d32f2f; display: inline-block; padding: 0 25px; border-radius: 15px; }
         .detail-table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 0.95rem; text-align: left; }
@@ -61,6 +67,9 @@
 
 <div class="category-title">單一口味 (5顆)</div>
 <div id="single-list"></div>
+<div style="margin: 4px 15px 10px;">
+    <button type="button" class="add-cart-btn" onclick="addSingle()">確定加入購物車</button>
+</div>
 
 <div class="category-title">自由混搭 (3+2顆)</div>
 <div class="mix-box">
@@ -69,7 +78,7 @@
     <label style="font-size:0.8rem; color:#666;">副口味 (2顆)：</label>
     <select id="free-2btn" onchange="updateFreeMixPreview()"></select>
     <div id="free-mix-preview" style="display:none;"></div>
-    <button onclick="addFreeMix()" style="width:100%; padding:10px; background:#FBC02D; border:none; border-radius:8px; font-weight:bold; font-size:0.95rem;">確認混搭加入購物車</button>
+    <button class="mix-add" onclick="addFreeMix()">確認混搭加入購物車</button>
 </div>
 
 <div class="category-title">超值快選組合 (3+2顆)</div>
@@ -78,126 +87,53 @@
     <div id="fixed-mix-config" style="display:none;">
         <select id="fixed-3btn" onchange="showMixPreview()"></select>
         <div id="mix-preview-text" style="display:none;"></div>
-        <button onclick="addFixedMix()" style="width:100%; padding:10px; background:#d32f2f; color:white; border:none; border-radius:8px; font-weight:bold;">確認加入 $ <span id="fixed-p">0</span></button>
+        <button class="mix-add mix-add-red" onclick="addFixedMix()">確認加入 $ <span id="fixed-p">0</span></button>
     </div>
 </div>
 
-<div id="custom-cart-list" style="margin: 10px 15px;"></div>
-
 <div class="cart-bar">
-    <div>總計：<span id="cart-total" style="font-size:1.4rem; color:#d32f2f; font-weight:bold;">$0</span></div>
-    <button class="btn-submit" onclick="showPaySelect()">送出訂單</button>
+    <div>總計：<span id="cart-total" style="font-size:1.4rem; color:#d32f2f; font-weight:bold;">$0</span>　<span id="cart-qty" style="font-size:1rem; font-weight:bold;">0 份</span></div>
+    <button type="button" class="btn-cart" onclick="showCart()">購物車</button>
+</div>
+<div id="cart-overlay" onclick="hideCart()">
+    <div class="cart-panel" onclick="event.stopPropagation()">
+        <h3>購物車</h3>
+        <div id="custom-cart-list"></div>
+        <div style="text-align:center; margin:10px 0 12px; font-weight:800;">確認總計：<span id="cart-panel-total" style="color:#d32f2f; font-size:1.25rem;">$0</span>　<span id="cart-panel-qty">0 份</span></div>
+        <button type="button" class="btn-submit" style="width:100%; margin-bottom:8px;" onclick="showPaySelect()">確認後送出訂單</button>
+        <button type="button" class="pay-btn pickup-btn-sub" onclick="hideCart()">關閉</button>
+    </div>
 </div>
 
 <div id="overlay" class="overlay"><div id="ticket-content" class="ticket"></div></div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, collection, addDoc, serverTimestamp, onSnapshot, doc, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, serverTimestamp, onSnapshot, doc, getDocs, getDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = { apiKey: "AIzaSyAbG0YttR57SQ5Xr_xPTKY1DoVgPtcnJzc", authDomain: "myordersystem-dee08.firebaseapp.com", projectId: "myordersystem-dee08", storageBucket: "myordersystem-dee08.firebasestorage.app", messagingSenderId: "775750661450", appId: "1:775750661450:web:e56f00456f0285c8bebdb3" };
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-    const ORDER_KEY = 'redhood_active_order';
-    let pickupUnsub = null;
+    const ORDER_KEY = 'redhood_active_orders';
+    const ORDER_KEY_OLD = 'redhood_active_order';
+    let pickupUnsubs = {};
+    let pickupOrders = {};
     let keepPickupOpen = false;
-    let lastPickupStatus = '';
+    let lastPickupStatus = {};
+    let lastPickupEdit = {};
+    let lastCancelledNo = '';
+    let lastCancelReason = '';
+    let reviseOrderId = null;
+    let storeModeNow = 'open';
 
-    function hidePickupTicket() {
-        keepPickupOpen = false;
-        const overlay = document.getElementById('overlay');
-        overlay.style.display = 'none';
-        overlay.classList.remove('pickup-mode');
-    }
-
-    function clearPickup() {
-        keepPickupOpen = false;
-        lastPickupStatus = '';
-        localStorage.removeItem(ORDER_KEY);
-        document.getElementById('pickup-chip').style.display = 'none';
-        document.getElementById('pickup-chip').innerText = '查看取餐資訊';
-        const overlay = document.getElementById('overlay');
-        overlay.style.display = 'none';
-        overlay.classList.remove('pickup-mode');
-        if (pickupUnsub) { pickupUnsub(); pickupUnsub = null; }
-    }
-
-    function reopenPickup() {
-        if (!localStorage.getItem(ORDER_KEY)) return;
-        keepPickupOpen = true;
-        const overlay = document.getElementById('overlay');
-        overlay.classList.add('pickup-mode');
-        overlay.style.display = 'flex';
-    }
-
-    function pickupButtons() {
-        return `<button type="button" class="pay-btn pickup-btn-main" style="margin-top:12px;" onclick="hidePickupTicket()">好的，繼續點餐</button>`;
-    }
-
-    function renderPickupHtml(od) {
-        const no = od.orderNo;
-        if (od.status === "confirmed") {
-            const readyHtml = od.readyTime
-                ? `<p>可取餐時間</p><div class="ready-time">${od.readyTime}</div><p style="color:#666; margin:0;">約 ${od.waitMinutes || ''} 分鐘後取餐</p>`
-                : `<p>請現場等候，謝謝！</p>`;
-            return `<div class="waiting-box"><h2>✅ 老闆已接單！</h2><p>您的取餐序號</p><div class="order-num">${no}</div>${readyHtml}${pickupButtons()}</div>`;
-        }
-        return `<div class="waiting-box"><p>您的取餐序號</p><div class="order-num">${no}</div><div class="status-badge pulse">⏳ 等待老闆接單中...</div>${pickupButtons()}</div>`;
-    }
-
-    function watchPickup(orderId, openNow) {
-        if (pickupUnsub) pickupUnsub();
-        localStorage.setItem(ORDER_KEY, orderId);
-        if (openNow) keepPickupOpen = true;
-        pickupUnsub = onSnapshot(doc(db, "orders", orderId), (snap) => {
-            if (!snap.exists()) {
-                localStorage.removeItem(ORDER_KEY);
-                document.getElementById('pickup-chip').style.display = 'none';
-                document.getElementById('ticket-content').innerHTML = `<div class="waiting-box"><h2>❌ 訂單已取消</h2><p>老闆取消了您的訂單。</p><button type="button" class="pay-btn pickup-btn-sub" onclick="clearPickup()">知道了</button></div>`;
-                const overlay = document.getElementById('overlay');
-                overlay.classList.add('pickup-mode');
-                overlay.style.display = 'flex';
-                if (pickupUnsub) { pickupUnsub(); pickupUnsub = null; }
-                return;
-            }
-            const od = snap.data();
-            if (od.status === "finished") {
-                clearPickup();
-                return;
-            }
-            const chip = document.getElementById('pickup-chip');
-            chip.style.display = 'block';
-            chip.innerText = od.status === 'confirmed' && od.readyTime
-                ? `取餐 #${od.orderNo}　可取餐 ${od.readyTime}　（點此查看）`
-                : `取餐 #${od.orderNo}　等待接單中　（點此查看）`;
-            document.getElementById('ticket-content').innerHTML = renderPickupHtml(od);
-            if (openNow || keepPickupOpen || (lastPickupStatus && lastPickupStatus !== od.status)) {
-                const overlay = document.getElementById('overlay');
-                overlay.classList.add('pickup-mode');
-                overlay.style.display = 'flex';
-                keepPickupOpen = true;
-            }
-            lastPickupStatus = od.status;
-            openNow = false;
-        });
-    }
-
-    window.hidePickupTicket = hidePickupTicket;
-    window.clearPickup = clearPickup;
-    window.reopenPickup = reopenPickup;
-    const savedOrderId = localStorage.getItem(ORDER_KEY);
-    if (savedOrderId) watchPickup(savedOrderId, false);
-
-    onSnapshot(doc(db, "settings", "storeStatus"), s => {
-        const data = s.exists() ? s.data() : { isOpen: true };
-        const mode = data.mode || (data.isOpen === false ? 'closed' : 'open');
+    function paintClosedOverlay() {
         const overlay = document.getElementById('closed-overlay');
-        if (mode === 'open') {
+        if (storeModeNow === 'open' || reviseOrderId) {
             overlay.style.display = 'none';
             return;
         }
         overlay.style.display = 'flex';
-        if (mode === 'delivery') {
+        if (storeModeNow === 'delivery') {
             overlay.style.background = 'rgba(230,126,34,0.98)';
             document.getElementById('store-overlay-icon').innerText = '🛵';
             document.getElementById('store-overlay-title').innerText = '外送中！';
@@ -208,6 +144,237 @@
             document.getElementById('store-overlay-title').innerText = '老闆休息囉！';
             document.getElementById('store-overlay-msg').innerText = '目前非營業時間，暫時無法點餐。';
         }
+    }
+
+    function loadOrderIds() {
+        try {
+            const v = JSON.parse(localStorage.getItem(ORDER_KEY) || '[]');
+            if (Array.isArray(v)) return v.filter(Boolean);
+            if (typeof v === 'string' && v) return [v];
+        } catch (e) {}
+        const old = localStorage.getItem(ORDER_KEY_OLD);
+        return old ? [old] : [];
+    }
+    function saveOrderIds(ids) {
+        localStorage.setItem(ORDER_KEY, JSON.stringify(ids));
+        localStorage.removeItem(ORDER_KEY_OLD);
+    }
+    function addOrderId(id) {
+        const ids = loadOrderIds();
+        if (!ids.includes(id)) ids.push(id);
+        saveOrderIds(ids);
+    }
+
+    function hidePickupTicket() {
+        keepPickupOpen = false;
+        const overlay = document.getElementById('overlay');
+        overlay.style.display = 'none';
+        overlay.classList.remove('pickup-mode');
+    }
+
+    function clearPickup() {
+        keepPickupOpen = false;
+        lastPickupStatus = {};
+        lastCancelledNo = '';
+        lastCancelReason = '';
+        Object.keys(pickupUnsubs).forEach(id => pickupUnsubs[id]());
+        pickupUnsubs = {};
+        pickupOrders = {};
+        saveOrderIds([]);
+        document.getElementById('pickup-chip').style.display = 'none';
+        document.getElementById('pickup-chip').innerText = '查看取餐資訊';
+        hidePickupTicket();
+    }
+
+    function dropPickup(id) {
+        if (pickupUnsubs[id]) { pickupUnsubs[id](); delete pickupUnsubs[id]; }
+        delete pickupOrders[id];
+        delete lastPickupStatus[id];
+        saveOrderIds(loadOrderIds().filter(x => x !== id));
+    }
+
+    function reopenPickup() {
+        if (!loadOrderIds().length) return;
+        keepPickupOpen = true;
+        paintPickup(true);
+    }
+
+    function pickupButtons() {
+        return `<button type="button" class="pay-btn pickup-btn-main" style="margin-top:12px;" onclick="hidePickupTicket()">好的，繼續點餐</button>`;
+    }
+
+    function parseLineItems(str) {
+        return (str || '').split(', ').filter(Boolean).map(s => {
+            const i = s.lastIndexOf('x');
+            if (i < 0) return { name: s, qty: 1 };
+            const q = parseInt(s.slice(i + 1), 10);
+            return { name: s.slice(0, i), qty: Number.isFinite(q) ? q : 1 };
+        });
+    }
+    function soldOutLabel(od) {
+        if (od.soldOutItems) return od.soldOutItems;
+        const next = {};
+        parseLineItems(od.proposedItems).forEach(it => { next[it.name] = it.qty; });
+        const names = [];
+        parseLineItems(od.items).forEach(it => {
+            if ((next[it.name] || 0) < it.qty && !names.includes(it.name)) names.push(it.name);
+        });
+        return names.join('、');
+    }
+    function renderPickupHtml(id, od) {
+        const no = od.orderNo;
+        const disc = od.discounted ? `<p style="color:#c62828; font-weight:bold;">已折價 $${od.discount || 40}</p><p>實付 ${od.total}</p>` : '';
+        const contract = od.contractPrice ? `<p style="color:#2e7d32; font-weight:bold;">特約價 每份折 $5（共 ${od.contractQty || ''} 份）</p>` : '';
+        if (od.editProposed) {
+            const sold = soldOutLabel(od);
+            const soldLine = sold ? `${sold}已完售` : '部分品項已完售';
+            return `<div class="waiting-box" style="margin-bottom:16px; padding-bottom:12px; border-bottom:1px dashed #e53935;"><h2>品項已完售</h2><p>您的取餐序號</p><div class="order-num">${no}</div>
+                <div style="background:#fff3e0;border:2px solid #ef6c00;border-radius:12px;padding:10px;margin:8px 0;color:#e65100;text-align:left;">
+                    <b>${soldLine}</b>
+                    <p style="margin:8px 0 0;">請更改品項、同意，或取消訂單</p>
+                    <p style="margin:8px 0 4px;">原品項</p><p style="margin:0;">${od.items || ''}</p>
+                    <p style="margin:8px 0 4px;">可供應</p><p style="margin:0;font-weight:bold;">${od.proposedItems || ''}</p>
+                    <p style="margin:8px 0 0;">金額 ${od.proposedTotal || ''}</p>
+                </div>
+                <button type="button" class="pay-btn pickup-btn-main" onclick="agreeEdit('${id}')">同意</button>
+                <button type="button" class="pay-btn pickup-btn-sub" onclick="startRevise('${id}')">更改品項</button>
+                <button type="button" class="pay-btn pickup-btn-cancel" onclick="cancelOrder('${id}')">取消訂單</button>
+            </div>`;
+        }
+        if (od.status === "confirmed") {
+            const readyHtml = od.readyTime
+                ? `<p>可取餐時間</p><div class="ready-time">${od.readyTime}</div><p style="color:#666; margin:0;">約 ${od.waitMinutes || ''} 分鐘後取餐</p>`
+                : `<p>請現場等候，謝謝！</p>`;
+            return `<div class="waiting-box" style="margin-bottom:16px; padding-bottom:12px; border-bottom:1px dashed #e53935;"><h2>✅ 老闆已接單！</h2><p>您的取餐序號</p><div class="order-num">${no}</div>${readyHtml}${contract}${disc}</div>`;
+        }
+        return `<div class="waiting-box" style="margin-bottom:16px; padding-bottom:12px; border-bottom:1px dashed #e53935;"><p>您的取餐序號</p><div class="order-num">${no}</div>${contract}<p style="margin:8px 0;">${od.items || ''}<br>金額 ${od.total}</p><div class="status-badge pulse">⏳ 等待老闆接單中...</div></div>`;
+    }
+
+    function paintPickup(forceOpen) {
+        const ids = loadOrderIds();
+        const live = ids.map(id => pickupOrders[id] && pickupOrders[id].status !== 'finished' ? { id, od: pickupOrders[id] } : null).filter(Boolean);
+        const chip = document.getElementById('pickup-chip');
+        if (!live.length) {
+            if (!ids.length) {
+                chip.style.display = 'none';
+                if (lastCancelledNo !== '') {
+                    document.getElementById('ticket-content').innerHTML = `<div class="waiting-box"><h2>❌ 訂單已取消</h2><p>${lastCancelReason === 'customer' ? '您已取消訂單。' : '老闆取消了您的訂單。'}</p><button type="button" class="pay-btn pickup-btn-sub" onclick="clearPickup()">知道了</button></div>`;
+                    const overlay = document.getElementById('overlay');
+                    overlay.classList.add('pickup-mode');
+                    overlay.style.display = 'flex';
+                    lastCancelledNo = '';
+                    lastCancelReason = '';
+                }
+            }
+            return;
+        }
+        lastCancelledNo = '';
+        chip.style.display = 'block';
+        const first = live[0].od;
+        chip.innerText = live.length > 1
+            ? `取餐資訊 ${live.length} 筆　${live.map(x => x.od.orderNo).join('、')}　（點此查看）`
+            : (first.editProposed
+                ? `取餐 ${first.orderNo}　請回覆：同意、更改或取消　（點此查看）`
+                : (first.status === 'confirmed' && first.readyTime
+                ? `取餐 ${first.orderNo}　可取餐 ${first.readyTime}　（點此查看）`
+                : `取餐 ${first.orderNo}　等待接單中　（點此查看）`));
+        const needReply = live.some(x => x.od.editProposed);
+        document.getElementById('ticket-content').innerHTML = live.map(x => renderPickupHtml(x.id, x.od)).join('') + (needReply ? '' : pickupButtons());
+        if (forceOpen || keepPickupOpen) {
+            const overlay = document.getElementById('overlay');
+            overlay.classList.add('pickup-mode');
+            overlay.style.display = 'flex';
+            keepPickupOpen = true;
+        }
+    }
+
+    function watchPickup(orderId, openNow) {
+        addOrderId(orderId);
+        if (openNow) keepPickupOpen = true;
+        if (pickupUnsubs[orderId]) pickupUnsubs[orderId]();
+        pickupUnsubs[orderId] = onSnapshot(doc(db, "orders", orderId), (snap) => {
+            if (!snap.exists()) {
+                if (lastCancelReason !== 'customer') lastCancelReason = 'boss';
+                lastCancelledNo = orderId;
+                dropPickup(orderId);
+                paintPickup(true);
+                return;
+            }
+            const od = snap.data();
+            if (od.status === "finished") {
+                dropPickup(orderId);
+                paintPickup(keepPickupOpen);
+                if (!loadOrderIds().length) hidePickupTicket();
+                return;
+            }
+            const changed = lastPickupStatus[orderId] && lastPickupStatus[orderId] !== od.status;
+            const editedNow = od.editAt && lastPickupEdit[orderId] !== od.editAt;
+            lastPickupStatus[orderId] = od.status;
+            lastPickupEdit[orderId] = od.editAt || '';
+            pickupOrders[orderId] = od;
+            paintPickup(openNow || keepPickupOpen || changed || editedNow);
+            openNow = false;
+        });
+    }
+
+    window.agreeEdit = async (id) => {
+        try {
+            const oref = doc(db, 'orders', id);
+            const os = await getDoc(oref);
+            if (!os.exists()) return;
+            const o = os.data();
+            if (!o.editProposed) return;
+            if (reviseOrderId === id) { reviseOrderId = null; paintClosedOverlay(); }
+            const q = o.proposedQty || 0;
+            await updateDoc(oref, {
+                status: 'pending',
+                items: o.proposedItems,
+                total: o.proposedTotal,
+                originalTotal: o.proposedTotal,
+                edited: true,
+                editProposed: false,
+                editRejected: false,
+                editAgreed: true,
+                customerRevised: false,
+                proposedItems: '',
+                proposedTotal: '',
+                proposedQty: 0,
+                proposedMinutes: 0,
+                soldOutItems: '',
+                editAt: Date.now(),
+                pointsEarned: o.contractPrice ? 0 : q
+            });
+        } catch (e) {
+            alert('請再試一次');
+        }
+    };
+    window.cancelOrder = async (id) => {
+        if (!confirm('確定要取消這筆訂單嗎？')) return;
+        try {
+            lastCancelReason = 'customer';
+            if (reviseOrderId === id) { reviseOrderId = null; paintClosedOverlay(); }
+            await deleteDoc(doc(db, 'orders', id));
+        } catch (e) {
+            lastCancelReason = '';
+            alert('請再試一次');
+        }
+    };
+    window.startRevise = (id) => {
+        if (!pickupOrders[id]) return;
+        reviseOrderId = id;
+        restoreCartFromOrder(pickupOrders[id]);
+        hidePickupTicket();
+        paintClosedOverlay();
+    };
+    window.hidePickupTicket = hidePickupTicket;
+    window.clearPickup = clearPickup;
+    window.reopenPickup = reopenPickup;
+    loadOrderIds().forEach(id => watchPickup(id, false));
+
+    onSnapshot(doc(db, "settings", "storeStatus"), s => {
+        const data = s.exists() ? s.data() : { isOpen: true };
+        storeModeNow = data.mode || (data.isOpen === false ? 'closed' : 'open');
+        paintClosedOverlay();
     });
 
     const baseMenu = [
@@ -223,7 +390,7 @@
         { items: ["半月OREO", "蛋黃奶酥"], price: 55 }
     ];
 
-    let cart = {}; let customItems = []; let soldOutList = []; let limited = { name: "", price: 0 };
+    let cart = {}; let pickQty = {}; let customItems = []; let soldOutList = []; let limited = { name: "", price: 0 };
     window.currentFreeMixPrice = 0;
 
     onSnapshot(doc(db, "settings", "menuStatus"), s => { soldOutList = s.exists() ? s.data().soldOut || [] : []; render(); });
@@ -238,7 +405,7 @@
             const isSold = soldOutList.includes(item.name);
             singleHtml += `<div class="menu-item" style="${isSold?'opacity:0.5':''}">
                 <div class="item-info"><b>${item.isLtd?'⭐':''}${item.name}</b><span>$${item.price}</span></div>
-                <div class="qty-controls">${isSold ? '<span style="color:red">售完</span>' : `<button class="btn-qty" onclick="updateQty('${item.name}',-1,${item.price})">-</button><span id="q-${item.name}">${cart[item.name]||0}</span><button class="btn-qty" onclick="updateQty('${item.name}',1,${item.price})">+</button>`}</div>
+                <div class="qty-controls">${isSold ? '<span style="color:red">售完</span>' : `<button type="button" class="btn-qty" onclick="updateQty('${item.name}',-1)">-</button><span id="q-${item.name}">${pickQty[item.name]||0}</span><button type="button" class="btn-qty" onclick="updateQty('${item.name}',1)">+</button>`}</div>
             </div>`;
         });
         document.getElementById('single-list').innerHTML = singleHtml;
@@ -307,50 +474,130 @@
         customItems.push({ name: `[混搭]${main}(3)+${other}(2)`, price: group.price }); refreshCart();
     };
 
-    window.updateQty = (n, c, p) => { cart[n] = (cart[n] || 0) + c; if(cart[n] <= 0) delete cart[n]; calc(); render(); };
+    window.updateQty = (n, c) => { pickQty[n] = (pickQty[n] || 0) + c; if(pickQty[n] <= 0) pickQty[n] = 0; render(); };
+    window.addSingle = () => {
+        const names = Object.keys(pickQty).filter(n => (pickQty[n] || 0) > 0);
+        if (!names.length) return alert('請先選擇數量');
+        names.forEach(n => { cart[n] = (cart[n] || 0) + pickQty[n]; pickQty[n] = 0; });
+        refreshCart(); render();
+    };
+    window.removeCartItem = (n) => { delete cart[n]; refreshCart(); };
     window.removeItem = (i) => { customItems.splice(i,1); refreshCart(); };
+    function restoreCartFromOrder(o) {
+        const all = [...baseMenu];
+        if (limited.name) all.push(limited);
+        const priceOf = (n) => all.find(x => x.name === n)?.price || 40;
+        const skip = {};
+        (soldOutLabel(o) || '').split('、').forEach(n => { if (n) skip[n] = true; });
+        soldOutList.forEach(n => { skip[n] = true; });
+        cart = {};
+        pickQty = {};
+        customItems = [];
+        (o.items || '').split(', ').filter(Boolean).forEach(s => {
+            const i = s.lastIndexOf('x');
+            const name = i < 0 ? s : s.slice(0, i);
+            const qty = i < 0 ? 1 : (parseInt(s.slice(i + 1), 10) || 1);
+            if (skip[name]) return;
+            const mix = String(name).match(/\[(?:自選|混搭)\](.+?)\(3\)\+(.+?)\(2\)/);
+            if (mix) {
+                if (skip[mix[1]] || skip[mix[2]]) return;
+                const price = Math.max(priceOf(mix[1]), priceOf(mix[2]));
+                for (let n = 0; n < qty; n++) customItems.push({ name, price });
+            } else {
+                cart[name] = (cart[name] || 0) + qty;
+            }
+        });
+        refreshCart();
+        render();
+    }
     function refreshCart() {
-        document.getElementById('custom-cart-list').innerHTML = customItems.map((m,i)=>`<div style="display:flex;justify-content:space-between;background:#fff;padding:10px;border-radius:8px;margin-bottom:5px;border:1px solid #FBC02D;"><span>${m.name} <b>$${m.price}</b></span><span onclick="removeItem(${i})" style="color:red;font-weight:bold;">移除</span></div>`).join('');
+        const all = [...baseMenu]; if (limited.name) all.push(limited);
+        const singleRows = Object.keys(cart).map(n => {
+            const item = all.find(i => i.name === n);
+            if (!item) return '';
+            return `<div class="cart-row"><span>${n} x${cart[n]} <b>$${item.price * cart[n]}</b></span><span onclick="removeCartItem('${n}')" style="color:#c62828;font-weight:800;">移除</span></div>`;
+        }).join('');
+        const mixRows = customItems.map((m,i)=>`<div class="cart-row"><span>${m.name} <b>$${m.price}</b></span><span onclick="removeItem(${i})" style="color:#c62828;font-weight:800;">移除</span></div>`).join('');
+        document.getElementById('custom-cart-list').innerHTML = (singleRows + mixRows) || '<div class="cart-row cart-empty">尚未加入品項</div>';
         calc();
     }
+    window.showCart = () => {
+        refreshCart();
+        document.getElementById('cart-overlay').style.display = 'flex';
+    };
+    window.hideCart = () => {
+        document.getElementById('cart-overlay').style.display = 'none';
+    };
     function calc() {
-        let t = 0; const all = [...baseMenu]; if(limited.name) all.push(limited);
-        Object.keys(cart).forEach(n => { const item = all.find(i=>i.name===n); if(item) t += item.price*cart[n]; });
-        customItems.forEach(m => t += m.price); document.getElementById('cart-total').innerText = `$${t}`;
+        let t = 0; let q = 0; const all = [...baseMenu]; if(limited.name) all.push(limited);
+        Object.keys(cart).forEach(n => { const item = all.find(i=>i.name===n); if(item) { t += item.price*cart[n]; q += cart[n]; } });
+        customItems.forEach(m => { t += m.price; q += 1; });
+        document.getElementById('cart-total').innerText = `$${t}`;
+        document.getElementById('cart-qty').innerText = `${q} 份`;
+        const pt = document.getElementById('cart-panel-total');
+        const pq = document.getElementById('cart-panel-qty');
+        if (pt) pt.innerText = `$${t}`;
+        if (pq) pq.innerText = `${q} 份`;
     }
 
     window.showPaySelect = () => {
+        hideCart();
         const totalStr = document.getElementById('cart-total').innerText;
         if(totalStr === "$0") return alert("購物車是空的喔！");
-        let detailHtml = `<h3>最後確認餐點</h3><div style="text-align:left; background:#f9f9f9; padding:10px; border-radius:10px; margin-bottom:10px;"><table class="detail-table"><tr><th>品項</th><th style="text-align:center;">數量</th><th>金額</th></tr>`;
-        const all = [...baseMenu]; if(limited.name) all.push(limited);
-        Object.keys(cart).forEach(n => { const item = all.find(i => i.name === n); detailHtml += `<tr><td>${n}</td><td style="text-align:center;">${cart[n]}</td><td>$${item.price * cart[n]}</td></tr>`; });
-        customItems.forEach(m => { detailHtml += `<tr><td>${m.name}</td><td style="text-align:center;">1</td><td>$${m.price}</td></tr>`; });
-        detailHtml += `</table></div><input type="text" id="order-note" class="note-input" placeholder="備註...">
-            <div style="font-size:1.4rem; font-weight:bold; color:#d32f2f; margin-bottom:15px;">總計金額：${totalStr}</div>
-            <button class="pay-btn" style="background:#d32f2f; color:white;" onclick="submitOrder('${totalStr}')">✅ 確認送出</button>
-            <button style="background:none; border:none; color:#888; text-decoration:underline;" onclick="document.getElementById('overlay').style.display='none'">返回修改</button>`;
-        document.getElementById('ticket-content').innerHTML = detailHtml;
         const overlay = document.getElementById('overlay');
         overlay.classList.remove('pickup-mode');
         overlay.style.display = 'flex';
+        submitOrder(totalStr);
     };
 
     window.submitOrder = async (t) => {
-        const note = document.getElementById('order-note').value || "無";
+        const noteEl = document.getElementById('order-note');
+        const note = noteEl ? (noteEl.value || "無") : "無";
         const ticket = document.getElementById('ticket-content');
         ticket.innerHTML = `<div class="waiting-box"><h2 class="pulse">訂單傳送中...</h2></div>`;
         try {
+            let itemsArr = [];
+            let pointsEarned = 0;
+            Object.keys(cart).forEach(n => { itemsArr.push(`${n}x${cart[n]}`); pointsEarned += cart[n]; });
+            customItems.forEach(ci => { itemsArr.push(`${ci.name}x1`); pointsEarned += 1; });
+            const items = itemsArr.join(', ');
+            const replacing = reviseOrderId && pickupOrders[reviseOrderId] && pickupOrders[reviseOrderId].status === 'pending';
+            if (replacing) {
+                const id = reviseOrderId;
+                const o = pickupOrders[id];
+                await updateDoc(doc(db, 'orders', id), {
+                    items,
+                    note,
+                    total: t,
+                    originalTotal: t,
+                    pointsEarned: o.contractPrice ? 0 : pointsEarned,
+                    status: 'pending',
+                    editProposed: false,
+                    editRejected: false,
+                    edited: false,
+                    editAgreed: false,
+                    customerRevised: true,
+                    proposedItems: '',
+                    proposedTotal: '',
+                    proposedQty: 0,
+                    proposedMinutes: 0,
+                    soldOutItems: '',
+                    editAt: Date.now()
+                });
+                reviseOrderId = null;
+                cart = {}; pickQty = {}; customItems = []; refreshCart(); render();
+                paintClosedOverlay();
+                watchPickup(id, true);
+                return;
+            }
             const qSnap = await getDocs(collection(db, "orders"));
             const no = qSnap.size + 1;
-            let itemsArr = [];
-            Object.keys(cart).forEach(n => itemsArr.push(`${n}x${cart[n]}`));
-            customItems.forEach(ci => itemsArr.push(`${ci.name}x1`));
-            const docRef = await addDoc(collection(db, "orders"), { orderNo: no, items: itemsArr.join(', '), note: note, total: t, time: new Date().toLocaleTimeString('zh-TW', {hour12:false, hour:'2-digit', minute:'2-digit'}), timestamp: serverTimestamp(), status: "pending" });
-            cart = {}; customItems = []; refreshCart(); render();
+            const docRef = await addDoc(collection(db, "orders"), { orderNo: no, items, note: note, total: t, originalTotal: t, time: new Date().toLocaleTimeString('zh-TW', {hour12:false, hour:'2-digit', minute:'2-digit'}), timestamp: serverTimestamp(), status: "pending" });
+            cart = {}; pickQty = {}; customItems = []; refreshCart(); render();
             watchPickup(docRef.id, true);
         } catch (e) { alert("系統忙碌！"); }
     };
+    refreshCart();
 </script>
 </body>
 </html>

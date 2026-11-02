@@ -44,6 +44,15 @@
         .s-btn { padding: 4px 1px; font-size: 0.68rem; border: 1px solid #ccc; border-radius: 4px; font-weight: bold; }
         .s-btn.off { background: #ffebee; color: #d32f2f; }
         .s-btn.on { background: #e8f5e9; color: #2e7d32; }
+        .member-box { background: rgba(255,255,255,0.18); border-radius: 6px; padding: 6px 8px; margin-top: 6px; font-size: 0.8rem; }
+        .finished .member-box { background: #f5f5f5; }
+        .points-full { background: #ffeb3b; color: #333; font-weight: bold; padding: 4px 6px; border-radius: 5px; margin-top: 4px; font-size: 0.75rem; }
+        .btn-discount { background: #ffeb3b; color: #333; border: none; padding: 6px 8px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.8rem; white-space: nowrap; flex: 1; }
+        .disc-amt { width: 72px; box-sizing: border-box; padding: 5px; border-radius: 6px; border: 2px solid #333; font-size: 0.85rem; font-weight: bold; margin: 0; }
+        .disc-row { display: flex; gap: 6px; align-items: center; margin-top: 4px; }
+        .member-pts-row { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; margin-top: 4px; }
+        .member-pts-row input { padding: 3px 5px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.75rem; }
+        .btn-pts { background: #1565c0; color: #fff; border: none; border-radius: 4px; padding: 3px 8px; font-size: 0.72rem; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body onclick="initAudio()">
@@ -76,6 +85,17 @@
     <button onclick="saveLtd()" style="background:#d32f2f; color:#fff; border:none; padding:3px 8px; border-radius:4px; font-size:0.75rem;">存</button>
 </div>
 
+<div class="admin-section" style="border-color:#1565c0">
+    <b>👤 會員點數:</b>
+    <div class="member-pts-row">
+        <input type="tel" id="mem-phone" placeholder="手機09開頭" maxlength="10" style="width:110px;" oninput="lookupMemberPts()">
+        <button type="button" class="btn-pts" onclick="lookupMemberPts()">查詢</button>
+        <span id="mem-info" style="color:#555;">輸入手機查詢</span>
+        <input type="number" id="mem-pts" placeholder="點數" min="0" step="1" style="width:64px;">
+        <button type="button" class="btn-pts" onclick="saveMemberPts()">儲存點數</button>
+    </div>
+</div>
+
 <div class="admin-section">
     <div id="stock-ctrl" class="stock-grid"></div>
 </div>
@@ -84,13 +104,19 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, collection, query, orderBy, onSnapshot, doc, setDoc, getDoc, getDocs, updateDoc, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, query, orderBy, onSnapshot, doc, setDoc, getDoc, getDocs, updateDoc, deleteDoc, writeBatch, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = { apiKey: "AIzaSyAbG0YttR57SQ5Xr_xPTKY1DoVgPtcnJzc", authDomain: "myordersystem-dee08.firebaseapp.com", projectId: "myordersystem-dee08", storageBucket: "myordersystem-dee08.firebasestorage.app", messagingSenderId: "775750661450", appId: "1:775750661450:web:e56f00456f0285c8bebdb3" };
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    let audioReady = false; let isFirst = true; let storeMode = 'open'; let ordersSnap = null;
+    let audioReady = false; let isFirst = true; let storeMode = 'open';
+    let membersMap = {};
+    const memberRef = (phone) => doc(db, 'settings', 'member_' + phone);
+    let ordersSnap = null;
+    window.initAudio = () => { if(!audioReady){ window.speechSynthesis.speak(new SpeechSynthesisUtterance("系統啟動")); audioReady=true; document.getElementById('audio-tip').innerText="✅ 語音已開啟"; }};
+
+    function money(v) { return parseInt(String(v || '').replace(/[^0-9]/g, ''), 10) || 0; }
     const baseItems = ["古早原味","爆漿奶油","熔岩巧克力","肉鬆沙拉","黃金起司","玉米起司","鮪魚起司","半月OREO","蛋黃奶酥"];
     const PRICE = {"古早原味":40,"爆漿奶油":45,"熔岩巧克力":45,"肉鬆沙拉":45,"黃金起司":50,"玉米起司":50,"鮪魚起司":50,"半月OREO":55,"蛋黃奶酥":55};
     let curLtd = ""; let curLtdPrice = 0; const pendingEdits = {};
@@ -122,7 +148,6 @@
         items.forEach(it => { t += unitPrice(it.name) * it.qty; q += it.qty; });
         return { t, q };
     }
-    window.initAudio = () => { if(!audioReady){ window.speechSynthesis.speak(new SpeechSynthesisUtterance("系統啟動")); audioReady=true; document.getElementById('audio-tip').innerText="✅ 語音已開啟"; }};
     function itemsStr(items) {
         return items.filter(it => it.qty > 0).map(it => `${it.name}x${it.qty}`).join(', ');
     }
@@ -170,16 +195,15 @@
 
     function renderOrders() {
         if (!ordersSnap) return;
-        const snap = ordersSnap;
         const list = document.getElementById('list');
         let rev = 0; let totalQty = 0;
         list.innerHTML = "";
         const orderDocs = [];
-        snap.forEach(d => orderDocs.push(d));
+        ordersSnap.forEach(d => orderDocs.push(d));
         orderDocs.reverse().forEach(d => {
             const o = d.data();
             const status = o.status;
-            rev += parseInt(String(o.total || '').replace(/[^0-9]/g, '')) || 0;
+            rev += money(o.total);
             const ed = getDraft(d.id, o);
             const rows = status === 'pending' ? ed.items : parseItems(o.items);
             let qty = 0;
@@ -189,19 +213,40 @@
             const itemsHtml = status === 'pending'
                 ? rows.map((it, i) => `<div class="item-row"><span>${it.name}</span><span class="edit-qty"><button type="button" onclick="editQty('${d.id}',${i},-1)">-</button><b>x${it.qty}</b>${it.qty < origQtyOf(ed, it.name) ? `<button type="button" onclick="editQty('${d.id}',${i},1)">+</button>` : ''}</span></div>`).join('')
                 : rows.map(it => `<div class="item-row"><span>${it.name}</span><b>x${it.qty}</b></div>`).join('');
-
+            const mem = o.memberPhone ? membersMap[o.memberPhone] : null;
+            const storedPts = mem ? (mem.points || 0) : (o.memberPoints || 0);
+            const thisOrderPts = o.pointsEarned || 0;
+            const ptsBefore = o.pointsAdded ? Math.max(0, storedPts - thisOrderPts) : storedPts;
+            const orderAmt = money(o.originalTotal || o.total);
+            const maxOff = Math.min(Math.floor(ptsBefore / 10) * 40, orderAmt);
+            const canDiscount = o.memberPhone && !o.discounted && !o.contractPrice && maxOff >= 40 && status === 'confirmed';
+            const earnTxt = o.contractPrice ? '出餐後 +0 點' : (o.pointsAdded ? `已加 ${thisOrderPts} 點` : `出餐後 +${thisOrderPts} 點`);
+            let memberHtml = '';
+            if (o.memberName || o.memberPhone) {
+                const pointsLine = `目前點數：<b>${ptsBefore}</b>　${earnTxt}${o.memberPhone ? ` <button type="button" class="btn-pts" onclick="fillMemberPts('${o.memberPhone}')">改點數</button>` : ''}`;
+                const extra = status === 'confirmed' ? `
+                    ${o.contractPrice ? `<div>特約價 每份 -$5（${o.contractQty || ''} 份，共折 $${o.contractOff || 0}），不積點</div>` : ''}
+                    ${o.discounted ? `<div>已折價 $${o.discount || 40}（扣 ${o.discountPts || 10} 點）</div>` : ''}
+                    ${canDiscount ? `<div class="points-full">可折最多 $${maxOff}（每 10 點折 $40）</div>
+                        <div class="disc-row">
+                            <input class="disc-amt" id="disc-${d.id}" type="number" min="40" step="40" max="${maxOff}" value="${maxOff}" placeholder="折多少">
+                            <button type="button" class="btn-discount" onclick="redeemDiscount('${d.id}', '${o.memberPhone}')">確認折價</button>
+                        </div>` : ''}
+                ` : (o.contractPrice ? `<div>特約價 每份 -$5，不積點</div>` : (o.discounted ? `<div>已折價 $${o.discount || 40}</div>` : ''));
+                memberHtml = `<div class="member-box">👤 ${o.memberName || ''} ${o.memberPhone || ''}<br>${pointsLine}${extra}</div>`;
+            }
             const div = document.createElement('div');
             div.className = `order-card ${status}`;
             div.innerHTML = `
                 <div class="order-no-badge">${o.orderNo}</div>
-                <div style="font-size:0.85rem; opacity:0.8;">${o.time}</div>
+                <div style="font-size:0.85rem; opacity:0.8;">${o.time || ''}</div>
                 <div style="margin:10px 0;">${itemsHtml}</div>
-                ${o.contractPrice ? `<div class="note-box">特約價 每份 -$5（${o.contractQty || ''} 份，共折 $${o.contractOff || 0}）</div>` : ''}
+                ${memberHtml}
                 ${o.editProposed ? `<div class="note-box">已通知客人：${o.soldOutItems || '部分品項'}已完售，等待同意、更改品項或取消<br>原：${o.items}<br>改：${o.proposedItems}　${o.proposedTotal}</div>` : (o.customerRevised ? `<div class="note-box">客人已更改品項，請確認後接單</div>` : '')}
                 ${o.note && o.note !== "無" ? `<div class="note-box">備註：${o.note}</div>` : ''}
-                ${status === 'confirmed' ? `<div class="ready-row">${o.readyTime ? `<div class="ready-label">可取餐 ${o.readyTime}（${o.waitMinutes}分鐘）</div>` : ''}${!o.contractPrice ? `<button class="btn-action btn-contract" onclick="applyContract('${d.id}')">特約價 每份 -$5</button>` : ''}</div>` : ''}
+                ${status === 'confirmed' ? `<div class="ready-row">${o.readyTime ? `<div class="ready-label">可取餐 ${o.readyTime}（${o.waitMinutes}分鐘）</div>` : ''}${!o.contractPrice && !o.discounted ? `<button class="btn-action btn-contract" onclick="applyContract('${d.id}')">特約價 每份 -$5</button>` : ''}</div>` : ''}
                 <div style="margin-top:15px; display:flex; justify-content:space-between; align-items:flex-end; gap:8px;">
-                    <b style="font-size:1.5rem; line-height:1.15;">${status === 'pending' ? '$' + sumItems(rows).t : o.total}　${qty} 份</b>
+                    <b style="font-size:1.5rem; line-height:1.15;">${status === 'pending' ? '$' + sumItems(rows).t : o.total}　${qty} 份${o.discounted ? `<div style="font-size:0.75rem; font-weight:normal;">已折 $${o.discount || 40}</div>` : ''}</b>
                     <div style="flex:1; display:flex; flex-direction:column; gap:8px;">
                         ${status === 'pending' ? `
                             ${needNotify ? `<button class="btn-action btn-notify" onclick="notifyCustomer('${d.id}')">通知客人</button>` : ''}
@@ -229,11 +274,26 @@
         document.getElementById('total-rev').innerText = `$${rev}`;
         document.getElementById('total-qty').innerText = `${totalQty} 份`;
     }
+
+    async function loadMembersThenRender() {
+        if (!ordersSnap) return;
+        const phones = new Set();
+        ordersSnap.forEach(d => { const p = d.data().memberPhone; if (p) phones.add(p); });
+        await Promise.all([...phones].map(async p => {
+            try {
+                const s = await getDoc(memberRef(p));
+                membersMap[p] = s.exists() ? s.data() : { points: 0, phone: p };
+            } catch (e) {
+                if (!membersMap[p]) membersMap[p] = { points: 0, phone: p };
+            }
+        }));
+        renderOrders();
+    }
     onSnapshot(query(collection(db, "orders"), orderBy("timestamp", "asc")), (snap) => {
         if (!isFirst && snap.docChanges().some(c => c.type === "added")) { window.speechSynthesis.speak(new SpeechSynthesisUtterance("新訂單")); }
         isFirst = false;
         ordersSnap = snap;
-        renderOrders();
+        loadMembersThenRender();
     });
 
     function paintStoreMode(mode) {
@@ -263,22 +323,72 @@
     window.setStoreMode = async (mode) => {
         await setDoc(doc(db, "settings", "storeStatus"), { isOpen: mode === 'open', mode: mode });
     };
+    function itemQty(o) {
+        return (o.items || '').split(', ').filter(Boolean).reduce((n, s) => n + (parseInt(s.split('x')[1], 10) || 1), 0);
+    }
+    async function restoreMemberPoints(o) {
+        if (!o.memberPhone) return;
+        let delta = 0;
+        if (o.pointsAdded) delta -= (o.pointsEarned || 0);
+        if (o.discounted) delta += (o.discountPts || 10);
+        if (delta === 0) return;
+        await setDoc(memberRef(o.memberPhone), { points: increment(delta) }, { merge: true });
+        const after = await getDoc(memberRef(o.memberPhone));
+        membersMap[o.memberPhone] = after.exists() ? after.data() : { points: 0 };
+    }
     window.updateStatus = async (id, s) => {
-        const patch = { status: s };
+        const oref = doc(db, 'orders', id);
+        const os = await getDoc(oref);
+        if (!os.exists()) return;
+        const o = os.data();
         if (s === 'pending') {
-            patch.edited = false;
-            patch.editProposed = false;
-            patch.editRejected = false;
-            patch.editAgreed = false;
-            patch.customerRevised = false;
-            patch.proposedItems = '';
-            patch.proposedTotal = '';
-            patch.proposedQty = 0;
-            patch.proposedMinutes = 0;
-            patch.soldOutItems = '';
+            await restoreMemberPoints(o);
+            const patch = {
+                status: 'pending',
+                pointsAdded: false,
+                discounted: false,
+                discount: 0,
+                discountPts: 0,
+                contractPrice: false,
+                contractOff: 0,
+                pointsEarned: o.contractPrice ? itemQty(o) : (o.pointsEarned || 0),
+                edited: false,
+                editProposed: false,
+                editRejected: false,
+                editAgreed: false,
+                customerRevised: false,
+                proposedItems: '',
+                proposedTotal: '',
+                proposedQty: 0,
+                proposedMinutes: 0,
+                soldOutItems: ''
+            };
+            if (o.originalTotal) patch.total = o.originalTotal;
+            await updateDoc(oref, patch);
+            return;
         }
-        await updateDoc(doc(db, 'orders', id), patch);
+        if (s !== 'finished') {
+            await updateDoc(oref, { status: s });
+            return;
+        }
+        const patch = { status: 'finished' };
+        if (o.memberPhone && !o.pointsAdded && !o.contractPrice) {
+            patch.memberPoints = await addOrderPoints(o);
+            patch.pointsAdded = true;
+        } else if (o.contractPrice && !o.pointsAdded) {
+            patch.pointsAdded = true;
+            patch.pointsEarned = 0;
+        }
+        await updateDoc(oref, patch);
     };
+    async function addOrderPoints(o) {
+        if (!o.memberPhone || o.pointsAdded || o.contractPrice) return;
+        const mref = memberRef(o.memberPhone);
+        await setDoc(mref, { name: o.memberName || '', phone: o.memberPhone, points: increment(o.pointsEarned || 0) }, { merge: true });
+        const ms = await getDoc(mref);
+        membersMap[o.memberPhone] = ms.exists() ? ms.data() : { points: o.pointsEarned || 0 };
+        return ms.exists() ? (ms.data().points || 0) : (o.pointsEarned || 0);
+    }
     window.notifyCustomer = async (id) => {
         try {
             const oref = doc(db, 'orders', id);
@@ -331,7 +441,7 @@
             if (o.discounted) pay = Math.max(0, pay - (o.discount || 0));
             const ready = new Date(Date.now() + minutes * 60000);
             const readyTime = ready.toLocaleTimeString('zh-TW', { hour12: false, hour: '2-digit', minute: '2-digit' });
-            const patch = { status: 'confirmed', waitMinutes: minutes, readyTime, items, originalTotal: '$' + t, total: '$' + pay, editProposed: false, editRejected: false, customerRevised: false, soldOutItems: '' };
+            const patch = { status: 'confirmed', waitMinutes: minutes, readyTime, items, originalTotal: '$' + t, total: '$' + pay, pointsEarned: o.contractPrice ? 0 : q, editProposed: false, editRejected: false, customerRevised: false, soldOutItems: '' };
             if (o.contractPrice) { patch.contractQty = q; patch.contractOff = q * 5; }
             await updateDoc(oref, patch);
             delete pendingEdits[id];
@@ -348,13 +458,67 @@
         if (!os.exists()) return;
         const o = os.data();
         if (o.contractPrice) return alert('已套用特約價');
+        if (o.discounted) return alert('已折點數，不可再套特約價');
         const qty = orderQty(o);
         const off = qty * 5;
-        if (!confirm(`客人已出示特約證件？每份折 $5，共 ${qty} 份，折 $${off}。`)) return;
-        const base = parseInt(String(o.total || '').replace(/[^0-9]/g, ''), 10) || 0;
-        await updateDoc(oref, { contractPrice: true, contractQty: qty, contractOff: off, originalTotal: o.originalTotal || o.total, total: '$' + Math.max(0, base - off) });
+        if (!confirm(`客人已出示特約證件？每份折 $5，共 ${qty} 份，折 $${off}。本單不積點。`)) return;
+        try {
+            if (o.memberPhone && o.pointsAdded && (o.pointsEarned || 0) > 0) {
+                await setDoc(memberRef(o.memberPhone), { points: increment(-(o.pointsEarned || 0)) }, { merge: true });
+                const after = await getDoc(memberRef(o.memberPhone));
+                membersMap[o.memberPhone] = after.exists() ? after.data() : { points: 0 };
+            }
+            const newTotal = Math.max(0, money(o.total) - off);
+            await updateDoc(oref, {
+                contractPrice: true,
+                contractQty: qty,
+                contractOff: off,
+                originalTotal: o.originalTotal || o.total,
+                total: '$' + newTotal,
+                pointsEarned: 0,
+                pointsAdded: true
+            });
+        } catch (e) {
+            alert('套用特約價失敗，請再試一次');
+        }
     };
-    window.deleteOrder = async (id) => { if(confirm("確定要取消這筆訂單嗎？")) await deleteDoc(doc(db, "orders", id)); };
+    window.redeemDiscount = async (orderId, phone) => {
+        const inp = document.getElementById('disc-' + orderId);
+        const amount = parseInt(inp && inp.value, 10) || 0;
+        if (amount < 40 || amount % 40 !== 0) return alert('折價須為 $40 的倍數');
+        const usePts = (amount / 40) * 10;
+        if (!confirm(`確認這位客人折價 $${amount}？將扣除 ${usePts} 點。`)) return;
+        try {
+            const mref = memberRef(phone);
+            const oref = doc(db, 'orders', orderId);
+            const os = await getDoc(oref);
+            if (!os.exists()) return alert('找不到訂單');
+            const o = os.data();
+            if (o.discounted) return alert('這筆已折過價');
+            if (o.contractPrice) return alert('特約價訂單不可折點數');
+            const ms = await getDoc(mref);
+            const pts = ms.exists() ? (ms.data().points || 0) : 0;
+            const ptsBefore = o.pointsAdded ? Math.max(0, pts - (o.pointsEarned || 0)) : pts;
+            const maxOff = Math.min(Math.floor(ptsBefore / 10) * 40, money(o.originalTotal || o.total));
+            if (amount > maxOff) return alert(`最多可折 $${maxOff}`);
+            const newTotal = Math.max(0, money(o.total) - amount);
+            await setDoc(mref, { points: increment(-usePts) }, { merge: true });
+            const after = await getDoc(mref);
+            membersMap[phone] = after.exists() ? after.data() : { points: pts - usePts };
+            await updateDoc(oref, { total: '$' + newTotal, originalTotal: o.originalTotal || o.total, discounted: true, discount: amount, discountPts: usePts, memberPoints: pts - usePts });
+        } catch (e) {
+            alert('折價失敗，請再試一次');
+        }
+    };
+    window.deleteOrder = async (id) => {
+        if (!confirm("確定要取消這筆訂單嗎？")) return;
+        const os = await getDoc(doc(db, 'orders', id));
+        if (os.exists()) {
+            const o = os.data();
+            if (o.memberPhone) await restoreMemberPoints(o);
+        }
+        await deleteDoc(doc(db, 'orders', id));
+    };
     window.clearAllOrders = async () => { if(confirm("確定歸零嗎？")){ const q = await getDocs(collection(db, "orders")); const b = writeBatch(db); q.forEach(d=>b.delete(d.ref)); await b.commit(); }};
 
     function updateStockUI(sList) {
@@ -366,6 +530,55 @@
     onSnapshot(doc(db, "settings", "limitedEdition"), s => { if(s.exists()){ curLtd = s.data().name; curLtdPrice = Number(s.data().price)||0; getDoc(doc(db, "settings", "menuStatus")).then(ss => updateStockUI(ss.exists() ? ss.data().soldOut || [] : [])); }});
     window.toggleSold = async (n, isS) => { await setDoc(doc(db, "settings", "menuStatus"), { soldOut: isS ? window.curSold.filter(i=>i!==n) : [...window.curSold, n] }); };
     window.saveLtd = async () => { await setDoc(doc(db, "settings", "limitedEdition"), { name: document.getElementById('ltd-n').value, price: Number(document.getElementById('ltd-p').value) }); alert("OK"); };
+
+    window.fillMemberPts = (phone) => {
+        document.getElementById('mem-phone').value = phone || '';
+        lookupMemberPts();
+        document.getElementById('mem-phone').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        document.getElementById('mem-pts').focus();
+    };
+    window.lookupMemberPts = async () => {
+        const phone = (document.getElementById('mem-phone').value || '').replace(/\D/g, '');
+        const info = document.getElementById('mem-info');
+        const ptsEl = document.getElementById('mem-pts');
+        if (!/^09\d{8}$/.test(phone)) {
+            info.innerText = phone ? '手機需 09 開頭 10 碼' : '輸入手機查詢';
+            ptsEl.value = '';
+            return;
+        }
+        try {
+            const s = await getDoc(memberRef(phone));
+            if (!s.exists()) {
+                info.innerText = '找不到此會員';
+                ptsEl.value = '';
+                return;
+            }
+            const m = s.data();
+            membersMap[phone] = m;
+            info.innerText = `${m.name || ''}　目前 ${m.points || 0} 點`;
+            ptsEl.value = m.points || 0;
+        } catch (e) {
+            info.innerText = '查詢失敗';
+        }
+    };
+    window.saveMemberPts = async () => {
+        const phone = (document.getElementById('mem-phone').value || '').replace(/\D/g, '');
+        const pts = Math.max(0, parseInt(document.getElementById('mem-pts').value, 10) || 0);
+        if (!/^09\d{8}$/.test(phone)) return alert('請輸入正確手機號碼（09開頭10碼）');
+        try {
+            const mref = memberRef(phone);
+            const s = await getDoc(mref);
+            if (!s.exists()) return alert('找不到此會員，請先請客人登記');
+            const m = s.data();
+            await setDoc(mref, { name: m.name || '', phone, points: pts }, { merge: true });
+            membersMap[phone] = { ...m, points: pts };
+            document.getElementById('mem-info').innerText = `${m.name || ''}　已改為 ${pts} 點`;
+            if (ordersSnap) renderOrders();
+            alert(`已將 ${m.name || phone} 點數改為 ${pts}`);
+        } catch (e) {
+            alert('儲存失敗，請再試一次');
+        }
+    };
 </script>
 </body>
 </html>

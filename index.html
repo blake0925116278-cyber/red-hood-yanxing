@@ -52,6 +52,12 @@
         .pulse { animation: pulse-animation 2s infinite; }
         @keyframes pulse-animation { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
         #closed-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(211,47,47,0.98); z-index: 9999; flex-direction: column; justify-content: center; align-items: center; color: white; text-align: center; padding: 20px; }
+        .member-bar { background: #fff; margin: 10px 15px 0; padding: 10px 12px; border-radius: 14px; display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; box-shadow: 0 3px 10px rgba(90,40,0,0.07); border: 1px solid rgba(251,192,45,0.4); }
+        #member-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); z-index: 10003; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; }
+        .member-card { background: #fff; width: 100%; max-width: 360px; border-radius: 16px; padding: 22px 18px; text-align: center; }
+        .member-card h2 { margin: 0 0 8px; color: #d32f2f; font-size: 1.25rem; }
+        .member-card p { color: #666; font-size: 0.9rem; margin: 0 0 14px; }
+        .member-card input { width: 100%; box-sizing: border-box; padding: 12px; margin: 6px 0; border: 2px solid #eee; border-radius: 10px; font-size: 1rem; }
     </style>
 </head>
 <body>
@@ -63,7 +69,21 @@
 </div>
 
 <div class="header"><h1>小紅帽雞蛋糕</h1></div>
+<div class="member-bar">
+    <span id="member-label">尚未登記會員</span>
+    <button type="button" id="member-switch-btn" onclick="logoutMember()" style="display:none; background:none; border:none; color:#888; text-decoration:underline; font-size:0.8rem;">更換會員</button>
+</div>
 <div id="pickup-chip" onclick="reopenPickup()">查看取餐資訊</div>
+<div id="member-overlay">
+    <div class="member-card">
+        <h2>會員登記</h2>
+        <p>只需手機號碼與姓名，下次進來會自動登入。</p>
+        <input id="member-phone" type="tel" inputmode="numeric" maxlength="10" placeholder="手機號碼（09開頭）" oninput="onMemberPhoneInput()">
+        <input id="member-name" type="text" maxlength="20" placeholder="姓名">
+        <div id="member-hint" style="font-size:0.85rem; color:#2e7d32; min-height:1.2em; margin:4px 0;"></div>
+        <button type="button" class="pay-btn" style="background:#d32f2f; color:white;" onclick="saveMember()">開始點餐</button>
+    </div>
+</div>
 
 <div class="category-title">單一口味 (5顆)</div>
 <div id="single-list"></div>
@@ -109,11 +129,136 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, collection, addDoc, serverTimestamp, onSnapshot, doc, getDocs, getDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, serverTimestamp, onSnapshot, doc, getDocs, getDoc, setDoc, increment, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = { apiKey: "AIzaSyAbG0YttR57SQ5Xr_xPTKY1DoVgPtcnJzc", authDomain: "myordersystem-dee08.firebaseapp.com", projectId: "myordersystem-dee08", storageBucket: "myordersystem-dee08.firebasestorage.app", messagingSenderId: "775750661450", appId: "1:775750661450:web:e56f00456f0285c8bebdb3" };
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+    const MEMBER_KEY = 'redhood_member';
+    let currentMember = null;
+    let memberUnsub = null;
+    const memberRef = (phone) => doc(db, 'settings', 'member_' + phone);
+
+    function showMemberBar() {
+        const label = document.getElementById('member-label');
+        const sw = document.getElementById('member-switch-btn');
+        if (currentMember) {
+            const pts = currentMember.points || 0;
+            const canOff = Math.floor(pts / 10) * 40;
+            const extra = canOff > 0 ? `　可折 $${canOff}` : '　滿 10 點可折 $40';
+            label.innerText = `會員：${currentMember.name} ${currentMember.phone}　點數 ${pts}${extra}`;
+            sw.style.display = 'inline';
+        } else {
+            label.innerText = '尚未登記會員';
+            sw.style.display = 'none';
+        }
+    }
+
+    function watchMember(phone) {
+        if (memberUnsub) memberUnsub();
+        memberUnsub = onSnapshot(memberRef(phone), s => {
+            if (!s.exists() || !currentMember) return;
+            currentMember.points = s.data().points || 0;
+            if (s.data().name) currentMember.name = s.data().name;
+            localStorage.setItem(MEMBER_KEY, JSON.stringify(currentMember));
+            showMemberBar();
+        });
+    }
+
+    function openMemberOverlay() {
+        document.getElementById('member-overlay').style.display = 'flex';
+        document.getElementById('member-phone').value = '';
+        document.getElementById('member-name').value = '';
+        document.getElementById('member-name').style.display = 'block';
+        document.getElementById('member-hint').innerText = '';
+    }
+
+    function closeMemberOverlay() {
+        document.getElementById('member-overlay').style.display = 'none';
+    }
+
+    function loadLocalMember() {
+        try {
+            const saved = JSON.parse(localStorage.getItem(MEMBER_KEY) || 'null');
+            if (saved && saved.phone && saved.name) {
+                currentMember = saved;
+                showMemberBar();
+                watchMember(saved.phone);
+                return true;
+            }
+        } catch (e) {}
+        currentMember = null;
+        showMemberBar();
+        return false;
+    }
+
+    window.onMemberPhoneInput = async () => {
+        const phone = document.getElementById('member-phone').value.replace(/\D/g, '');
+        document.getElementById('member-phone').value = phone;
+        if (phone.length !== 10) {
+            document.getElementById('member-hint').innerText = '';
+            document.getElementById('member-name').style.display = 'block';
+            return;
+        }
+        try {
+            const snap = await getDoc(memberRef(phone));
+            if (snap.exists()) {
+                const m = snap.data();
+                document.getElementById('member-name').value = m.name || '';
+                document.getElementById('member-name').style.display = 'none';
+                const p = m.points || 0;
+                const off = Math.floor(p / 10) * 40;
+                document.getElementById('member-hint').innerText = off
+                    ? `歡迎回來，${m.name}（點數 ${p}，可折 $${off}）`
+                    : `歡迎回來，${m.name}（點數 ${p}）`;
+            } else {
+                document.getElementById('member-name').value = '';
+                document.getElementById('member-name').style.display = 'block';
+                document.getElementById('member-hint').innerText = '新會員，請填姓名';
+            }
+        } catch (e) {
+            document.getElementById('member-hint').innerText = '';
+        }
+    };
+
+    window.saveMember = async () => {
+        const phone = document.getElementById('member-phone').value.replace(/\D/g, '');
+        let name = (document.getElementById('member-name').value || '').trim();
+        if (!/^09\d{8}$/.test(phone)) return alert('請輸入正確手機號碼（09開頭10碼）');
+        let existed = false;
+        try {
+            const snap = await getDoc(memberRef(phone));
+            existed = snap.exists();
+            if (existed && snap.data().name) name = snap.data().name;
+        } catch (e) {}
+        if (!name) return alert('請輸入姓名');
+        let points = 0;
+        try {
+            const payload = { name, phone, updatedAt: serverTimestamp() };
+            if (!existed) payload.points = 0;
+            await setDoc(memberRef(phone), payload, { merge: true });
+            const after = await getDoc(memberRef(phone));
+            if (after.exists()) points = after.data().points || 0;
+        } catch (e) {
+            points = 0;
+        }
+        currentMember = { name, phone, points };
+        localStorage.setItem(MEMBER_KEY, JSON.stringify(currentMember));
+        watchMember(phone);
+        showMemberBar();
+        closeMemberOverlay();
+    };
+
+    window.logoutMember = () => {
+        if (memberUnsub) { memberUnsub(); memberUnsub = null; }
+        localStorage.removeItem(MEMBER_KEY);
+        currentMember = null;
+        showMemberBar();
+        openMemberOverlay();
+    };
+
+    if (!loadLocalMember()) openMemberOverlay();
+
     const ORDER_KEY = 'redhood_active_orders';
     const ORDER_KEY_OLD = 'redhood_active_order';
     let pickupUnsubs = {};
@@ -224,7 +369,7 @@
     function renderPickupHtml(id, od) {
         const no = od.orderNo;
         const disc = od.discounted ? `<p style="color:#c62828; font-weight:bold;">已折價 $${od.discount || 40}</p><p>實付 ${od.total}</p>` : '';
-        const contract = od.contractPrice ? `<p style="color:#2e7d32; font-weight:bold;">特約價 每份折 $5（共 ${od.contractQty || ''} 份）</p>` : '';
+        const contract = od.contractPrice ? `<p style="color:#2e7d32; font-weight:bold;">特約價 每份折 $5（共 ${od.contractQty || ''} 份，本單不積點）</p>` : '';
         if (od.editProposed) {
             const sold = soldOutLabel(od);
             const soldLine = sold ? `${sold}已完售` : '部分品項已完售';
@@ -353,6 +498,16 @@
         try {
             lastCancelReason = 'customer';
             if (reviseOrderId === id) { reviseOrderId = null; paintClosedOverlay(); }
+            const os = await getDoc(doc(db, 'orders', id));
+            if (os.exists()) {
+                const o = os.data();
+                if (o.memberPhone) {
+                    let delta = 0;
+                    if (o.pointsAdded) delta -= (o.pointsEarned || 0);
+                    if (o.discounted) delta += (o.discountPts || 10);
+                    if (delta !== 0) await setDoc(memberRef(o.memberPhone), { points: increment(delta) }, { merge: true });
+                }
+            }
             await deleteDoc(doc(db, 'orders', id));
         } catch (e) {
             lastCancelReason = '';
@@ -542,6 +697,7 @@
 
     window.showPaySelect = () => {
         hideCart();
+        if (!currentMember) { openMemberOverlay(); return alert("請先登記會員"); }
         const totalStr = document.getElementById('cart-total').innerText;
         if(totalStr === "$0") return alert("購物車是空的喔！");
         const overlay = document.getElementById('overlay');
@@ -592,7 +748,7 @@
             }
             const qSnap = await getDocs(collection(db, "orders"));
             const no = qSnap.size + 1;
-            const docRef = await addDoc(collection(db, "orders"), { orderNo: no, items, note: note, total: t, originalTotal: t, time: new Date().toLocaleTimeString('zh-TW', {hour12:false, hour:'2-digit', minute:'2-digit'}), timestamp: serverTimestamp(), status: "pending" });
+            const docRef = await addDoc(collection(db, "orders"), { orderNo: no, items, note: note, total: t, originalTotal: t, time: new Date().toLocaleTimeString('zh-TW', {hour12:false, hour:'2-digit', minute:'2-digit'}), timestamp: serverTimestamp(), status: "pending", memberName: currentMember.name, memberPhone: currentMember.phone, pointsEarned, pointsAdded: false, discounted: false });
             cart = {}; pickQty = {}; customItems = []; refreshCart(); render();
             watchPickup(docRef.id, true);
         } catch (e) { alert("系統忙碌！"); }

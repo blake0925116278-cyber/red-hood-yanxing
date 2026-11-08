@@ -119,6 +119,8 @@
     <div class="cart-panel" onclick="event.stopPropagation()">
         <h3>購物車</h3>
         <div id="custom-cart-list"></div>
+        <label style="display:block; text-align:left; font-weight:800; margin:10px 0 4px; color:#5d3a00;">備註</label>
+        <textarea id="order-note" class="note-input" rows="2" maxlength="80" placeholder="可填備註，例如少糖、晚點取（可不填）"></textarea>
         <div style="text-align:center; margin:10px 0 12px; font-weight:800;">確認總計：<span id="cart-panel-total" style="color:#d32f2f; font-size:1.25rem;">$0</span>　<span id="cart-panel-qty">0 份</span></div>
         <button type="button" class="btn-submit" style="width:100%; margin-bottom:8px;" onclick="showPaySelect()">確認後送出訂單</button>
         <button type="button" class="pay-btn pickup-btn-sub" onclick="hideCart()">關閉</button>
@@ -137,6 +139,9 @@
     const MEMBER_KEY = 'redhood_member';
     let currentMember = null;
     let memberUnsub = null;
+    let memberLookup = null;
+    let memberLookupPending = null;
+    let memberSaving = false;
     const memberRef = (phone) => doc(db, 'settings', 'member_' + phone);
 
     function showMemberBar() {
@@ -166,11 +171,20 @@
     }
 
     function openMemberOverlay() {
+        memberLookup = null;
+        memberLookupPending = null;
         document.getElementById('member-overlay').style.display = 'flex';
         document.getElementById('member-phone').value = '';
         document.getElementById('member-name').value = '';
         document.getElementById('member-name').style.display = 'block';
         document.getElementById('member-hint').innerText = '';
+    }
+
+    function normalizePhone(v) {
+        const full = '０１２３４５６７８９';
+        let s = String(v || '');
+        for (let i = 0; i < 10; i++) s = s.split(full[i]).join(String(i));
+        return s.replace(/\D/g, '').slice(0, 10);
     }
 
     function closeMemberOverlay() {
@@ -193,60 +207,104 @@
     }
 
     window.onMemberPhoneInput = async () => {
-        const phone = document.getElementById('member-phone').value.replace(/\D/g, '');
+        const phone = normalizePhone(document.getElementById('member-phone').value);
         document.getElementById('member-phone').value = phone;
         if (phone.length !== 10) {
+            memberLookup = null;
+            memberLookupPending = null;
             document.getElementById('member-hint').innerText = '';
             document.getElementById('member-name').style.display = 'block';
             return;
         }
-        try {
+        document.getElementById('member-hint').innerText = '查詢中…';
+        const req = (async () => {
             const snap = await getDoc(memberRef(phone));
+            return { phone, snap };
+        })();
+        memberLookupPending = req;
+        try {
+            const { phone: p, snap } = await req;
+            if (memberLookupPending !== req) return;
+            if (normalizePhone(document.getElementById('member-phone').value) !== p) return;
             if (snap.exists()) {
                 const m = snap.data();
-                document.getElementById('member-name').value = m.name || '';
+                memberLookup = { phone: p, exists: true, name: m.name || '', points: m.points || 0 };
+                document.getElementById('member-name').value = memberLookup.name;
                 document.getElementById('member-name').style.display = 'none';
-                const p = m.points || 0;
-                const off = Math.floor(p / 10) * 40;
+                const off = Math.floor(memberLookup.points / 10) * 40;
                 document.getElementById('member-hint').innerText = off
-                    ? `歡迎回來，${m.name}（點數 ${p}，可折 $${off}）`
-                    : `歡迎回來，${m.name}（點數 ${p}）`;
+                    ? `歡迎回來，${memberLookup.name}（點數 ${memberLookup.points}，可折 $${off}）`
+                    : `歡迎回來，${memberLookup.name}（點數 ${memberLookup.points}）`;
             } else {
+                memberLookup = { phone: p, exists: false, name: '', points: 0 };
                 document.getElementById('member-name').value = '';
                 document.getElementById('member-name').style.display = 'block';
                 document.getElementById('member-hint').innerText = '新會員，請填姓名';
             }
         } catch (e) {
-            document.getElementById('member-hint').innerText = '';
+            if (memberLookupPending === req) {
+                memberLookup = null;
+                document.getElementById('member-hint').innerText = '查詢失敗，請再試一次';
+            }
+        } finally {
+            if (memberLookupPending === req) memberLookupPending = null;
         }
     };
 
     window.saveMember = async () => {
-        const phone = document.getElementById('member-phone').value.replace(/\D/g, '');
+        if (memberSaving) return;
+        const phone = normalizePhone(document.getElementById('member-phone').value);
+        document.getElementById('member-phone').value = phone;
         let name = (document.getElementById('member-name').value || '').trim();
         if (!/^09\d{8}$/.test(phone)) return alert('請輸入正確手機號碼（09開頭10碼）');
-        let existed = false;
+        memberSaving = true;
+        const btn = document.querySelector('#member-overlay .pay-btn');
+        if (btn) { btn.disabled = true; btn.innerText = '登入中…'; }
         try {
-            const snap = await getDoc(memberRef(phone));
-            existed = snap.exists();
-            if (existed && snap.data().name) name = snap.data().name;
-        } catch (e) {}
-        if (!name) return alert('請輸入姓名');
-        let points = 0;
-        try {
-            const payload = { name, phone, updatedAt: serverTimestamp() };
-            if (!existed) payload.points = 0;
-            await setDoc(memberRef(phone), payload, { merge: true });
-            const after = await getDoc(memberRef(phone));
-            if (after.exists()) points = after.data().points || 0;
+            if (memberLookupPending) {
+                try { await memberLookupPending; } catch (e) {}
+            }
+            let existed = false;
+            let points = 0;
+            if (memberLookup && memberLookup.phone === phone) {
+                existed = memberLookup.exists;
+                points = memberLookup.points || 0;
+                if (existed && memberLookup.name) name = memberLookup.name;
+            } else {
+                try {
+                    const snap = await getDoc(memberRef(phone));
+                    existed = snap.exists();
+                    if (existed) {
+                        const m = snap.data();
+                        if (m.name) name = m.name;
+                        points = m.points || 0;
+                        memberLookup = { phone, exists: true, name, points };
+                    } else {
+                        memberLookup = { phone, exists: false, name: '', points: 0 };
+                    }
+                } catch (e) {
+                    alert('網路不穩，請再試一次');
+                    return;
+                }
+            }
+            if (!name) return alert('請輸入姓名');
+            if (!existed) {
+                await setDoc(memberRef(phone), { name, phone, points: 0, updatedAt: serverTimestamp() }, { merge: true });
+                points = 0;
+            } else {
+                setDoc(memberRef(phone), { name, phone, updatedAt: serverTimestamp() }, { merge: true }).catch(() => {});
+            }
+            currentMember = { name, phone, points };
+            localStorage.setItem(MEMBER_KEY, JSON.stringify(currentMember));
+            watchMember(phone);
+            showMemberBar();
+            closeMemberOverlay();
         } catch (e) {
-            points = 0;
+            alert('登入失敗，請再試一次');
+        } finally {
+            memberSaving = false;
+            if (btn) { btn.disabled = false; btn.innerText = '開始點餐'; }
         }
-        currentMember = { name, phone, points };
-        localStorage.setItem(MEMBER_KEY, JSON.stringify(currentMember));
-        watchMember(phone);
-        showMemberBar();
-        closeMemberOverlay();
     };
 
     window.logoutMember = () => {
@@ -708,7 +766,7 @@
 
     window.submitOrder = async (t) => {
         const noteEl = document.getElementById('order-note');
-        const note = noteEl ? (noteEl.value || "無") : "無";
+        const note = noteEl ? ((noteEl.value || '').trim() || '無') : '無';
         const ticket = document.getElementById('ticket-content');
         ticket.innerHTML = `<div class="waiting-box"><h2 class="pulse">訂單傳送中...</h2></div>`;
         try {
@@ -741,7 +799,9 @@
                     editAt: Date.now()
                 });
                 reviseOrderId = null;
-                cart = {}; pickQty = {}; customItems = []; refreshCart(); render();
+                cart = {}; pickQty = {}; customItems = [];
+                if (noteEl) noteEl.value = '';
+                refreshCart(); render();
                 paintClosedOverlay();
                 watchPickup(id, true);
                 return;
@@ -749,7 +809,9 @@
             const qSnap = await getDocs(collection(db, "orders"));
             const no = qSnap.size + 1;
             const docRef = await addDoc(collection(db, "orders"), { orderNo: no, items, note: note, total: t, originalTotal: t, time: new Date().toLocaleTimeString('zh-TW', {hour12:false, hour:'2-digit', minute:'2-digit'}), timestamp: serverTimestamp(), status: "pending", memberName: currentMember.name, memberPhone: currentMember.phone, pointsEarned, pointsAdded: false, discounted: false });
-            cart = {}; pickQty = {}; customItems = []; refreshCart(); render();
+            cart = {}; pickQty = {}; customItems = [];
+            if (noteEl) noteEl.value = '';
+            refreshCart(); render();
             watchPickup(docRef.id, true);
         } catch (e) { alert("系統忙碌！"); }
     };
